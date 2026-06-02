@@ -2,8 +2,8 @@
 
 public class CarSpawner : MonoBehaviour
 {
-    [SerializeField] GameObject[] carsPrefab;
-    [SerializeField] ChaseCamera cameraScript;
+    [SerializeField] private GameObject[] carsPrefab;
+    [SerializeField] private ChaseCamera cameraScript;
 
     void Start()
     {
@@ -19,9 +19,13 @@ public class CarSpawner : MonoBehaviour
         }
 
         int index = PlayerPrefs.GetInt("CarIndexValue", 0);
-
-        //  HARD SAFETY CLAMP
         index = Mathf.Clamp(index, 0, carsPrefab.Length - 1);
+
+        if (carsPrefab[index] == null)
+        {
+            Debug.LogError("Car prefab missing at Element " + index);
+            return;
+        }
 
         GameObject car = Instantiate(
             carsPrefab[index],
@@ -35,6 +39,16 @@ public class CarSpawner : MonoBehaviour
         {
             cameraScript.target = car.transform;
             cameraScript.targetRb = rb;
+        }
+
+        Skidmarks skidmarksController = FindAnyObjectByType<Skidmarks>();
+
+        WheelSkid[] wheelSkids = car.GetComponentsInChildren<WheelSkid>(true);
+
+        foreach (WheelSkid wheelSkid in wheelSkids)
+        {
+            wheelSkid.SetRigidbody(rb);
+            wheelSkid.SetSkidmarksController(skidmarksController);
         }
     }
 }

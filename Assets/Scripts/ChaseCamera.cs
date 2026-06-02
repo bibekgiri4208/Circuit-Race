@@ -14,6 +14,12 @@ public class ChaseCamera : MonoBehaviour
     public float speedForMaxDistance = 80f;
     public float distanceSmoothSpeed = 4f;
 
+    [Header("Speed Shake")]
+    public float shakeStartSpeed = 70f;
+    public float maxShakeSpeed = 180f;
+    public float maxShakeAmount = 0.04f;
+    public float shakeFrequency = 22f;
+
     [Header("Position Smooth")]
     public float positionSmoothSpeed = 8f;
 
@@ -43,7 +49,7 @@ public class ChaseCamera : MonoBehaviour
         currentDistance = baseDistance;
         currentTilt = 0f;
 
-        // 🔥 FORCE CLEAN INITIAL CAMERA STATE (fixes startup tilt)
+        //  FORCE CLEAN INITIAL CAMERA STATE (fixes startup tilt)
         if (target != null && targetRb != null)
         {
             Quaternion rotation = Quaternion.Euler(0f, currentYaw, 0f);
@@ -76,6 +82,7 @@ public class ChaseCamera : MonoBehaviour
         velocity.y = 0f;
 
         float speed = velocity.magnitude;
+        float speedKmh = speed * 3.6f;
 
         // ================= CAMERA DIRECTION =================
         Vector3 forward = target.forward;
@@ -100,6 +107,31 @@ public class ChaseCamera : MonoBehaviour
             rotationSmoothSpeed * Time.deltaTime
         );
 
+
+        Vector3 GetSpeedShake(float speedKmh)
+        {
+            if (speedKmh < shakeStartSpeed)
+                return Vector3.zero;
+
+            float shake01 = Mathf.InverseLerp(
+                shakeStartSpeed,
+                maxShakeSpeed,
+                speedKmh
+            );
+
+            float amount = maxShakeAmount * shake01;
+
+            float x =
+                (Mathf.PerlinNoise(Time.time * shakeFrequency, 0f) - 0.5f)
+                * amount;
+
+            float y =
+                (Mathf.PerlinNoise(0f, Time.time * shakeFrequency) - 0.5f)
+                * amount;
+
+            return transform.right * x + transform.up * y;
+        }
+
         // ================= SPEED BASED DISTANCE =================
         float speed01 = Mathf.Clamp01(speed / speedForMaxDistance);
         speed01 = Mathf.SmoothStep(0f, 1f, speed01);
@@ -121,9 +153,11 @@ public class ChaseCamera : MonoBehaviour
             Quaternion.Euler(0f, currentYaw, 0f);
 
         Vector3 desiredPosition =
-            target.position
-            + Vector3.up * height
-            - rotation * Vector3.forward * currentDistance;
+    target.position
+    + Vector3.up * height
+    - rotation * Vector3.forward * currentDistance;
+
+        desiredPosition += GetSpeedShake(speedKmh);
 
         transform.position = Vector3.Lerp(
             transform.position,

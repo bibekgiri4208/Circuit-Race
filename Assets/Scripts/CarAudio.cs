@@ -2,145 +2,240 @@
 
 public class CarAudio : MonoBehaviour
 {
-    [Header("References")]
-    public CarController car;
+    public SimcadeCarController car;
+    public Rigidbody rb;
 
     [Header("Audio Sources")]
-    public AudioSource Engine;
-    public AudioSource SkidSound;
-    public AudioSource GearChangeSound;
-    public AudioSource TurboFlutterSound;
+    public AudioSource engineSource;
+    public AudioSource gearShiftSource;
+    public AudioSource skidSource;
 
     [Header("Engine Pitch")]
-    public float minPitch = 0.9f;
-    public float maxPitch = 2.2f;
+    public float idlePitch = 0.75f;
+    public float maxPitch = 2.25f;
+    public float pitchSmooth = 6f;
 
-    [Header("Volume")]
+    [Header("Engine Volume")]
     public float idleVolume = 0.35f;
-    public float maxVolume = 1f;
+    public float maxVolume = 0.95f;
 
-    [Header("Smoothing")]
-    public float pitchSmoothSpeed = 8f;
-    public float volumeSmoothSpeed = 5f;
+    [Header("Gear System")]
+    public float[] gearSpeeds = { 30f, 60f, 90f, 125f, 160f, 190f };
+    public float rpmDropAmount = 0.45f;
+    public float rpmDropRecoverySpeed = 4f;
+    public float shiftCooldown = 0.35f;
 
-    int lastGear;
+    [Header("Turbo Flutter")]
+    public AudioSource turboFlutterSource;
+    public float turboMinSpeedKmh = 30f;
+    public float gasReleaseThreshold = 0.65f;
+    public float turboCooldown = 0.45f;
 
-    bool wasAccelerating;
+    float previousThrottle;
+    float lastTurboTime;
+
+    int currentGear = 0;
+    float rpmDrop = 0f;
+    float lastShiftTime;
+
+    void Start()
+    {
+        if (car == null)
+            car = GetComponent<SimcadeCarController>();
+
+        if (rb == null)
+            rb = GetComponent<Rigidbody>();
+
+        // ENGINE
+        if (engineSource != null)
+        {
+            engineSource.loop = true;
+            engineSource.playOnAwake = true;
+
+            if (!engineSource.isPlaying)
+                engineSource.Play();
+        }
+
+        // SKID
+        if (skidSource != null)
+        {
+            skidSource.loop = true;
+            skidSource.playOnAwake = false;
+            skidSource.volume = 0f;
+            skidSource.Stop();
+        }
+
+        // TURBO
+        if (turboFlutterSource != null)
+        {
+            turboFlutterSource.loop = false;
+            turboFlutterSource.playOnAwake = false;
+        }
+    }
 
     void Update()
     {
-        EngineSound();
+        if (car == null || rb == null) return;
 
-        GearShift();
+        float speedKmh = rb.linearVelocity.magnitude * 3.6f;
 
-        SkidControl();
-
-        TurboFlutter();
+        HandleGearShift(speedKmh);
+        HandleEngine(speedKmh);
+        HandleTurboFlutter(speedKmh);
+        HandleSkid();
     }
 
-    void EngineSound()
+    void HandleEngine(float speedKmh)
     {
-        float speed = car.SpeedKmh;
+        if (engineSource == null) return;
 
-        // ================= RPM FEEL =================
+        float gearMinSpeed = currentGear == 0 ? 0f : gearSpeeds[currentGear - 1];
+        float gearMaxSpeed = currentGear >= gearSpeeds.Length
+            ? car.topSpeedKmh
+            : gearSpeeds[currentGear];
 
-        float gearFactor =
-            Mathf.InverseLerp(
-                0,
-                car.topSpeed / car.maxGear,
-                speed % (car.topSpeed / car.maxGear)
-            );
+        float gearProgress = Mathf.InverseLerp(
+            gearMinSpeed,
+            gearMaxSpeed,
+            speedKmh
+        );
 
-        // Arcade exaggerated rev climb
-        float targetPitch =
-            Mathf.Lerp(minPitch, maxPitch, gearFactor);
+        float fakeRPM = Mathf.Lerp(0.25f, 1f, gearProgress);
 
-        // Small throttle boost
-        if (car.moveInput > 0.1f)
-            targetPitch += 0.08f;
+        rpmDrop = Mathf.Lerp(
+            rpmDrop,
+            0f,
+            Time.deltaTime * rpmDropRecoverySpeed
+        );
 
-        // Smooth pitch
-        Engine.pitch = Mathf.Lerp(
-            Engine.pitch,
+        fakeRPM -= rpmDrop;
+        fakeRPM = Mathf.Clamp01(fakeRPM);
+
+        float load = Mathf.Clamp01(Mathf.Max(car.EngineLoad, car.ThrottleInput));
+
+        float targetPitch = Mathf.Lerp(idlePitch, maxPitch, fakeRPM);
+
+        targetPitch += load * 0.05f;
+
+        engineSource.pitch = Mathf.Lerp(
+            engineSource.pitch,
             targetPitch,
-            Time.deltaTime * pitchSmoothSpeed
+            Time.deltaTime * pitchSmooth
         );
 
-        // ================= VOLUME =================
-
-        float throttleAmount =
-            Mathf.Abs(car.moveInput);
-
-        float targetVolume =
-            Mathf.Lerp(idleVolume, maxVolume, throttleAmount);
-
-        // More aggressive at high speed
-        targetVolume += speed / car.topSpeed * 0.15f;
-
-        Engine.volume = Mathf.Lerp(
-            Engine.volume,
-            targetVolume,
-            Time.deltaTime * volumeSmoothSpeed
+        engineSource.volume = Mathf.Lerp(
+            idleVolume,
+            maxVolume,
+            Mathf.Max(load, fakeRPM * 0.6f)
         );
     }
 
-    void GearShift()
+    void HandleTurboFlutter(float speedKmh)
     {
-        if (car.CurrentGear != lastGear)
+        if (turboFlutterSource == null) return;
+
+        float currentThrottle = car.ThrottleInput;
+        float throttleDrop = previousThrottle - currentThrottle;
+
+        bool releasedGas =
+     throttleDrop > gasReleaseThreshold && currentThrottle < 0.35f;
+
+        bool canFlutter =
+            speedKmh >= turboMinSpeedKmh &&
+            Time.time > lastTurboTime + turboCooldown;
+
+        if (releasedGas && canFlutter)
         {
-            if (GearChangeSound != null)
-            {
-                GearChangeSound.pitch =
-                    Random.Range(0.95f, 1.05f);
+            turboFlutterSource.pitch = Random.Range(0.92f, 1.08f);
+            turboFlutterSource.Play();
 
-                GearChangeSound.Play();
-            }
+            lastTurboTime = Time.time;
+        }
 
-            // Fake RPM drop effect
-            Engine.pitch *= 0.82f;
+        previousThrottle = currentThrottle;
+    }
 
-            lastGear = car.CurrentGear;
+    void HandleGearShift(float speedKmh)
+    {
+        int newGear = 0;
+
+        for (int i = 0; i < gearSpeeds.Length; i++)
+        {
+            if (speedKmh > gearSpeeds[i])
+                newGear = i + 1;
+        }
+
+        if (newGear != currentGear && Time.time > lastShiftTime + shiftCooldown)
+        {
+            currentGear = newGear;
+            lastShiftTime = Time.time;
+
+            rpmDrop = rpmDropAmount;
+
+            if (gearShiftSource != null)
+                gearShiftSource.Play();
         }
     }
 
-    void SkidControl()
+    void HandleSkid()
     {
-        bool drifting =
-            car.handbrake &&
-            car.SpeedKmh > 20f;
+        if (skidSource == null || car == null || rb == null) return;
 
-        if (drifting)
+        float speedKmh = rb.linearVelocity.magnitude * 3.6f;
+
+        // HARD STOP skid audio at low speed
+        if (speedKmh < 22f)
         {
-            if (!SkidSound.isPlaying)
-                SkidSound.Play();
+            skidSource.volume = 0f;
+            skidSource.Stop();
+            return;
+        }
+
+        Vector3 localVelocity =
+            transform.InverseTransformDirection(rb.linearVelocity);
+
+        float sidewaysSpeed = Mathf.Abs(localVelocity.x);
+        float forwardSpeed = Mathf.Abs(localVelocity.z);
+
+        float driftAngle =
+            Mathf.Atan2(sidewaysSpeed, forwardSpeed) * Mathf.Rad2Deg;
+
+        bool realDrift =
+            speedKmh > 30f &&
+            driftAngle > 14f &&
+            Mathf.Abs(car.ThrottleInput) > 0.15f;
+
+        bool handbrakeDrift =
+            car.IsHandbraking &&
+            speedKmh > 28f &&
+            driftAngle > 10f;
+
+        bool shouldSkid = realDrift || handbrakeDrift;
+
+        if (shouldSkid)
+        {
+            skidSource.volume = Mathf.Lerp(
+                skidSource.volume,
+                0.75f,
+                Time.deltaTime * 12f
+            );
+
+            if (!skidSource.isPlaying)
+                skidSource.Play();
         }
         else
         {
-            if (SkidSound.isPlaying)
-                SkidSound.Stop();
-        }
-    }
+            skidSource.volume = Mathf.Lerp(
+                skidSource.volume,
+                0f,
+                Time.deltaTime * 18f
+            );
 
-    void TurboFlutter()
-    {
-        bool accelerating =
-            car.moveInput > 0.2f;
-
-        bool throttleReleased =
-            wasAccelerating &&
-            car.moveInput < 0.05f;
-
-        if (throttleReleased && car.SpeedKmh > 40f)
-        {
-            if (TurboFlutterSound != null)
+            if (skidSource.volume < 0.05f)
             {
-                TurboFlutterSound.pitch =
-                    Random.Range(0.9f, 1.1f);
-
-                TurboFlutterSound.Play();
+                skidSource.volume = 0f;
+                skidSource.Stop();
             }
         }
-
-        wasAccelerating = accelerating;
     }
 }
