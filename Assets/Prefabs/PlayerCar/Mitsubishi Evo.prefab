@@ -842,6 +842,7 @@ GameObject:
   - component: {fileID: 2691305572025540082}
   - component: {fileID: 4071438367746283832}
   - component: {fileID: 3233348609140474377}
+  - component: {fileID: -5296219790233607650}
   m_Layer: 0
   m_Name: Mitsubishi Evo
   m_TagString: Untagged
@@ -1010,6 +1011,24 @@ MonoBehaviour:
   turboMinSpeedKmh: 30
   gasReleaseThreshold: 0.25
   turboCooldown: 0.35
+--- !u!114 &-5296219790233607650
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3789611207696627354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f7a602ad57ccd4d96fb67e62b1d2bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLapTracker
+  totalLaps: 3
+  totalCheckpoints: 3
+  currentLap: 1
+  nextCheckpointIndex: 0
+  lapText: {fileID: 0}
+  checkpointText: {fileID: 0}
 --- !u!1 &4000121307784763447
 GameObject:
   m_ObjectHideFlags: 0

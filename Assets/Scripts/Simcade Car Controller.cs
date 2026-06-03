@@ -105,10 +105,20 @@ public class SimcadeCarController : MonoBehaviour
         UpdateWheelMeshes();
         UpdateBodyVisual();
         HandleBrakeLights();
+
+        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
+        {
+            return;
+        }
     }
 
     void FixedUpdate()
     {
+        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
+        {
+            return;
+        }
+
         SpeedKmh = rb.linearVelocity.magnitude * 3.6f;
 
         HandleSteering();

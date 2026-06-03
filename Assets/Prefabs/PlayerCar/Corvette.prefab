@@ -1812,6 +1812,7 @@ GameObject:
   - component: {fileID: 2118533280434488554}
   - component: {fileID: 8570901556399705781}
   - component: {fileID: 4257571725807435313}
+  - component: {fileID: -6585688991943823115}
   m_Layer: 0
   m_Name: Corvette
   m_TagString: Untagged
@@ -1979,3 +1980,21 @@ MonoBehaviour:
   turboMinSpeedKmh: 30
   gasReleaseThreshold: 0.25
   turboCooldown: 0.35
+--- !u!114 &-6585688991943823115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8890146382420310702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f7a602ad57ccd4d96fb67e62b1d2bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLapTracker
+  totalLaps: 3
+  totalCheckpoints: 3
+  currentLap: 1
+  nextCheckpointIndex: 0
+  lapText: {fileID: 0}
+  checkpointText: {fileID: 0}

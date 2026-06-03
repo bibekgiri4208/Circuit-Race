@@ -1463,6 +1463,7 @@ GameObject:
   - component: {fileID: 1857428917883096097}
   - component: {fileID: 4707367738719067735}
   - component: {fileID: 3160893359746906717}
+  - component: {fileID: -6322803935251698079}
   m_Layer: 0
   m_Name: Nissan Skyline
   m_TagString: Untagged
@@ -1631,6 +1632,24 @@ MonoBehaviour:
   turboMinSpeedKmh: 30
   gasReleaseThreshold: 0.25
   turboCooldown: 0.35
+--- !u!114 &-6322803935251698079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8025157401352123947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f7a602ad57ccd4d96fb67e62b1d2bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLapTracker
+  totalLaps: 3
+  totalCheckpoints: 3
+  currentLap: 1
+  nextCheckpointIndex: 0
+  lapText: {fileID: 0}
+  checkpointText: {fileID: 0}
 --- !u!1 &8068886705046506967
 GameObject:
   m_ObjectHideFlags: 0

@@ -1401,6 +1401,7 @@ GameObject:
   - component: {fileID: 3902594477910226772}
   - component: {fileID: 7256098452575086728}
   - component: {fileID: 5786951085588818896}
+  - component: {fileID: 7553349348670696991}
   m_Layer: 0
   m_Name: Subaru
   m_TagString: Untagged
@@ -1569,6 +1570,24 @@ MonoBehaviour:
   turboMinSpeedKmh: 30
   gasReleaseThreshold: 0.25
   turboCooldown: 0.35
+--- !u!114 &7553349348670696991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5326068050015794256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f7a602ad57ccd4d96fb67e62b1d2bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLapTracker
+  totalLaps: 3
+  totalCheckpoints: 3
+  currentLap: 1
+  nextCheckpointIndex: 0
+  lapText: {fileID: 0}
+  checkpointText: {fileID: 0}
 --- !u!1 &5365820109415546129
 GameObject:
   m_ObjectHideFlags: 0
