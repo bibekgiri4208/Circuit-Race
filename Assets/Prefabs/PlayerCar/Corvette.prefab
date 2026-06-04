@@ -1921,7 +1921,7 @@ MonoBehaviour:
   highSpeedSteerLimit: 0.82
   brakeTorque: 5000
   idleBrakeTorque: 250
-  handbrakeTorque: 9000
+  handbrakeTorque: 6500
   brakeLights:
   - {fileID: 6705231056226759847}
   - {fileID: 6239259292055685589}
