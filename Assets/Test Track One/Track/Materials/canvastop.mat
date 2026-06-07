@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: canvastop
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 2100000, guid: e5562ec494e0c1b4f95bbb638059ff60, type: 2}
+  m_Parent: {fileID: 2100000, guid: 4676f9802e6abcc4487ceeaa4fe801a4, type: 2}
   m_ModifiedSerializedProperties: 16
   m_ValidKeywords:
   - _EMISSION

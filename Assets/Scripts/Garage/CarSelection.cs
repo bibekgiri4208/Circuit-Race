@@ -19,6 +19,10 @@ public class CarSelection : MonoBehaviour
     [Header("3D Car Name Text")]
     [SerializeField] private TMP_Text carNameText;
 
+    [Header("UI Panels")]
+    [SerializeField] private GameObject mainMenuPanel;
+    [SerializeField] private GameObject trackSelectionPanel;
+
     int currentCarIndex;
 
     void Awake()
@@ -98,11 +102,50 @@ public class CarSelection : MonoBehaviour
     {
         if (cars == null || cars.Length == 0) return;
 
+        // Save the car choice right away when entering the track menu
         currentCarIndex = Mathf.Clamp(currentCarIndex, 0, cars.Length - 1);
-
         PlayerPrefs.SetInt("CarIndexValue", currentCarIndex);
         PlayerPrefs.Save();
 
-        SceneManager.LoadScene("Level1");
+        // Switch panels: Hide main menu, show track choices
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (trackSelectionPanel != null) trackSelectionPanel.SetActive(true);
+    }
+
+    // Call this from the "Back" button in the track panel
+    public void BackToMainMenu()
+    {
+        // Switch panels back
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+        if (trackSelectionPanel != null) trackSelectionPanel.SetActive(false);
+    }
+
+    // Track Selection Button Functions
+    public void LoadTrack1()
+    {
+        SceneManager.LoadScene("Level1"); // Or whatever your Track 1 scene name is
+    }
+
+    public void LoadTrack2()
+    {
+        SceneManager.LoadScene("Level2");
+    }
+
+    public void LoadTrack3()
+    {
+        SceneManager.LoadScene("Level3");
+    }
+
+    public void PracticeButton()
+    {
+        if (cars == null || cars.Length == 0) return;
+
+        currentCarIndex = Mathf.Clamp(currentCarIndex, 0, cars.Length - 1);
+
+       
+        PlayerPrefs.SetInt("CarIndexValue", currentCarIndex);
+        PlayerPrefs.Save();
+
+        SceneManager.LoadScene("Practice");
     }
 }
