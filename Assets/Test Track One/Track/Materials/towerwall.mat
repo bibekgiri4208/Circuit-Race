@@ -22,7 +22,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: towerwall
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
-  m_Parent: {fileID: 2100000, guid: 5d76457ea77d04c4988c6adc920b8612, type: 2}
+  m_Parent: {fileID: 2100000, guid: 7cff1203853a2bb40b6b4c887f414b2b, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _EMISSION
