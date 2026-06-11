@@ -457,11 +457,11 @@ WheelCollider:
     m_AsymptoteValue: 0.5
     m_Stiffness: 1.2
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.4
+    m_ExtremumSlip: 0.25
     m_ExtremumValue: 1
-    m_AsymptoteSlip: 0.9
-    m_AsymptoteValue: 0.55
-    m_Stiffness: 1.08
+    m_AsymptoteSlip: 0.45
+    m_AsymptoteValue: 0.75
+    m_Stiffness: 1.6
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -674,11 +674,11 @@ WheelCollider:
     m_AsymptoteValue: 0.5
     m_Stiffness: 1.2
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.22
+    m_ExtremumSlip: 0.18
     m_ExtremumValue: 1
-    m_AsymptoteSlip: 0.45
-    m_AsymptoteValue: 0.75
-    m_Stiffness: 1.4
+    m_AsymptoteSlip: 0.35
+    m_AsymptoteValue: 0.8
+    m_Stiffness: 1.8
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -852,11 +852,11 @@ WheelCollider:
     m_AsymptoteValue: 0.5
     m_Stiffness: 1.2
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.22
+    m_ExtremumSlip: 0.18
     m_ExtremumValue: 1
-    m_AsymptoteSlip: 0.45
-    m_AsymptoteValue: 0.75
-    m_Stiffness: 1.4
+    m_AsymptoteSlip: 0.35
+    m_AsymptoteValue: 0.8
+    m_Stiffness: 1.8
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -977,11 +977,11 @@ WheelCollider:
     m_AsymptoteValue: 0.5
     m_Stiffness: 1.2
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.4
+    m_ExtremumSlip: 0.25
     m_ExtremumValue: 1
-    m_AsymptoteSlip: 0.9
-    m_AsymptoteValue: 0.55
-    m_Stiffness: 1.08
+    m_AsymptoteSlip: 0.45
+    m_AsymptoteValue: 0.75
+    m_Stiffness: 1.6
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1568,7 +1568,7 @@ MonoBehaviour:
   reverseTorque: 1200
   topSpeedKmh: 180
   driftTorqueMultiplier: 1.8
-  maxSteerAngle: 42
+  maxSteerAngle: 35
   steerResponse: 11
   highSpeedSteerLimit: 0.82
   brakeTorque: 5000
@@ -1578,20 +1578,20 @@ MonoBehaviour:
   - {fileID: 6536410283112098662}
   - {fileID: 6957030637702143365}
   brakeLightIntensity: 2.5
-  normalRearSidewaysStiffness: 1.08
-  driftRearSidewaysStiffness: 0.65
-  handbrakeRearSidewaysStiffness: 0.5
-  frontSidewaysStiffness: 1.45
-  minDriftSpeedKmh: 25
+  normalRearSidewaysStiffness: 1.25
+  driftRearSidewaysStiffness: 0.95
+  handbrakeRearSidewaysStiffness: 0.8
+  frontSidewaysStiffness: 1.55
+  minDriftSpeedKmh: 40
   driftStartAngle: 8
   fullDriftAngle: 28
-  maxSlipAssist: 2.5
-  counterSteerStability: 2
-  handbrakeInitiationBoost: 1.8
+  maxSlipAssist: 0.5
+  counterSteerStability: 0.3
+  handbrakeInitiationBoost: 0
   gripChangeSpeed: 5
   downforce: 70
-  angularDragNormal: 1.3
-  angularDragDrift: 0.55
+  angularDragNormal: 1.6
+  angularDragDrift: 1.3
   carVisual: {fileID: 4310077519567467934}
   bodyRollAmount: 7
   bodyPitchAmount: 3
