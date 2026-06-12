@@ -12123,10 +12123,10 @@ MonoBehaviour:
   - {fileID: 5815643586606746427}
   - {fileID: 7881128838147647838}
   - {fileID: 597860477382043878}
+  - {fileID: 2030204537496575141}
   - {fileID: 3186799541780450355}
   - {fileID: 2625546678378927435}
   - {fileID: 4985028310895366160}
-  - {fileID: 2030204537496575141}
   carInfos:
   - carName: Skyline
   - carName: Mitsubishi
@@ -12134,10 +12134,10 @@ MonoBehaviour:
   - carName: Subaru
   - carName: Ferrari
   - carName: Corvette
+  - carName: BMW M3
   - carName: Peugeot
   - carName: Nissan 370z
   - carName: Lamborghini
-  - carName: BMW M3
   carNameText: {fileID: 551086157}
   mainMenuPanel: {fileID: 1471516155}
   trackSelectionPanel: {fileID: 1208938502}
