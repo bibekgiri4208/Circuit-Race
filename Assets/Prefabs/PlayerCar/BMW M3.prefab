@@ -1128,7 +1128,7 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.9
     m_AsymptoteValue: 0.55
-    m_Stiffness: 1.08
+    m_Stiffness: 1.8
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1216,7 +1216,7 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.9
     m_AsymptoteValue: 0.55
-    m_Stiffness: 1.08
+    m_Stiffness: 1.8
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1657,8 +1657,8 @@ MonoBehaviour:
   reverseTorque: 1200
   topSpeedKmh: 180
   driftTorqueMultiplier: 1.8
-  maxSteerAngle: 42
-  steerResponse: 11
+  maxSteerAngle: 32
+  steerResponse: 6
   highSpeedSteerLimit: 0.82
   brakeTorque: 5000
   idleBrakeTorque: 250
@@ -1667,14 +1667,14 @@ MonoBehaviour:
   - {fileID: 3898736962809188573}
   - {fileID: 2387562508487266296}
   brakeLightIntensity: 2.5
-  normalRearSidewaysStiffness: 1.08
+  normalRearSidewaysStiffness: 2
   driftRearSidewaysStiffness: 0.65
   handbrakeRearSidewaysStiffness: 0.5
   frontSidewaysStiffness: 1.45
   minDriftSpeedKmh: 25
-  driftStartAngle: 8
-  fullDriftAngle: 28
-  maxSlipAssist: 2.5
+  driftStartAngle: 15
+  fullDriftAngle: 40
+  maxSlipAssist: 2
   counterSteerStability: 2
   handbrakeInitiationBoost: 1.8
   gripChangeSpeed: 5
