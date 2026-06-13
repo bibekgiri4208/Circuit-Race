@@ -13,9 +13,20 @@ public class TireSmokeController : MonoBehaviour
     public ParticleSystem rearRightSmoke;
 
     [Header("Smoke Conditions")]
-    public float smokeStartSpeed = 25f;
-    public float smokeDriftAngle = 10f;
-    public float smokeEmissionRate = 45f;
+    public float smokeStartSpeed = 10f;
+    public float smokeDriftAngle = 8f;
+
+    [Header("Smoke Amount")]
+    public float normalSmokeRate = 35f;
+    public float driftSmokeRate = 60f;
+    public float handbrakeSmokeRate = 80f;
+    public float burnoutSmokeRate = 90f;
+    public float brakingSmokeRate = 55f;
+
+    [Header("Acceleration / Braking Detection")]
+    public float hardAccelerationThreshold = 0.75f;
+    public float hardBrakeThreshold = 0.65f;
+    public float lowSpeedBurnoutLimit = 35f;
 
     void Start()
     {
@@ -35,15 +46,58 @@ public class TireSmokeController : MonoBehaviour
     {
         if (car == null || rb == null) return;
 
-        bool shouldSmoke =
+        bool drifting =
             car.IsDrifting &&
             car.SpeedKmh > smokeStartSpeed &&
             car.DriftAngle > smokeDriftAngle;
 
-        SetSmoke(frontLeftSmoke, shouldSmoke);
-        SetSmoke(frontRightSmoke, shouldSmoke);
-        SetSmoke(rearLeftSmoke, shouldSmoke);
-        SetSmoke(rearRightSmoke, shouldSmoke);
+        bool handbraking =
+            car.IsHandbraking &&
+            car.SpeedKmh > 5f;
+
+        bool hardAcceleration =
+            car.ThrottleInput > hardAccelerationThreshold &&
+            car.SpeedKmh < lowSpeedBurnoutLimit;
+
+        bool hardBraking =
+            IsBrakingHard();
+
+        float rearSmokeRate = 0f;
+        float frontSmokeRate = 0f;
+
+        if (drifting)
+            rearSmokeRate = driftSmokeRate;
+
+        if (handbraking)
+            rearSmokeRate = Mathf.Max(rearSmokeRate, handbrakeSmokeRate);
+
+        if (hardAcceleration)
+            rearSmokeRate = Mathf.Max(rearSmokeRate, burnoutSmokeRate);
+
+        if (hardBraking)
+        {
+            frontSmokeRate = brakingSmokeRate;
+            rearSmokeRate = Mathf.Max(rearSmokeRate, brakingSmokeRate * 0.5f);
+        }
+
+        SetSmoke(frontLeftSmoke, frontSmokeRate);
+        SetSmoke(frontRightSmoke, frontSmokeRate);
+        SetSmoke(rearLeftSmoke, rearSmokeRate);
+        SetSmoke(rearRightSmoke, rearSmokeRate);
+    }
+
+    bool IsBrakingHard()
+    {
+        // If your controller exposes brakeInput publicly later, use that.
+        // For now, detect braking using deceleration.
+        Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
+
+        bool movingForward = localVelocity.z > 5f;
+
+        // Strong deceleration estimate
+        float forwardSpeed = localVelocity.z;
+
+        return movingForward && car.ThrottleInput < 0.05f && forwardSpeed > 8f && rb.linearVelocity.magnitude < forwardSpeed + 1f;
     }
 
     void SetupSmoke(ParticleSystem smoke)
@@ -56,17 +110,17 @@ public class TireSmokeController : MonoBehaviour
         smoke.Stop();
     }
 
-    void SetSmoke(ParticleSystem smoke, bool enabled)
+    void SetSmoke(ParticleSystem smoke, float rate)
     {
         if (smoke == null) return;
 
         var emission = smoke.emission;
-        emission.rateOverTime = enabled ? smokeEmissionRate : 0f;
+        emission.rateOverTime = rate;
 
-        if (enabled && !smoke.isPlaying)
+        if (rate > 0f && !smoke.isPlaying)
             smoke.Play();
 
-        if (!enabled && smoke.isPlaying)
+        if (rate <= 0f && smoke.isPlaying)
             smoke.Stop();
     }
 }

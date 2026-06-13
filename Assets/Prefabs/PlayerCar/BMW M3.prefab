@@ -10646,8 +10646,8 @@ Transform:
   - {fileID: 3468192660857136153}
   - {fileID: 2886253127727350855}
   - {fileID: 2364187336373162297}
-  - {fileID: 2114391852845721323}
   - {fileID: 4757616913844245523}
+  - {fileID: 2114391852845721323}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &3477834496915491114
@@ -10808,7 +10808,14 @@ MonoBehaviour:
   rearRightSmoke: {fileID: 8402382695103672504}
   smokeStartSpeed: 40
   smokeDriftAngle: 10
-  smokeEmissionRate: 45
+  normalSmokeRate: 35
+  driftSmokeRate: 60
+  handbrakeSmokeRate: 80
+  burnoutSmokeRate: 90
+  brakingSmokeRate: 55
+  hardAccelerationThreshold: 0.75
+  hardBrakeThreshold: 0.65
+  lowSpeedBurnoutLimit: 35
 --- !u!1 &5128091894253746753
 GameObject:
   m_ObjectHideFlags: 0
