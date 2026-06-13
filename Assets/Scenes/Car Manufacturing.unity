@@ -119,16 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!54 &192383154 stripped
-Rigidbody:
-  m_CorrespondingSourceObject: {fileID: 8956638068990666403, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-  m_PrefabInstance: {fileID: 3783847231857357405}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &192383155 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-  m_PrefabInstance: {fileID: 3783847231857357405}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &652055918
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -503,11 +493,11 @@ PrefabInstance:
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: target
       value: 
-      objectReference: {fileID: 192383155}
+      objectReference: {fileID: 5480160054889536385}
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: targetRb
       value: 
-      objectReference: {fileID: 192383154}
+      objectReference: {fileID: 5246328377314252030}
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: maxDistance
       value: 4
@@ -1635,6 +1625,63 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1001 &2745183841115033126
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4959183190584482717, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+      propertyPath: m_Name
+      value: BMW M3
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
 --- !u!82 &2771184572993292652
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2288,75 +2335,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4036326010758546140}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &3783847231857357405
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2387562508487266296, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_Intensity
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3898736962809188573, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_Intensity
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8517092607477059853, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_Name
-      value: BMW M3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8517092607477059853, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8687335424882518492, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
 --- !u!65 &3942018081651814866
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2567,6 +2545,16 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2871205548983523950}
   m_Mesh: {fileID: -79620487990006924, guid: e417704fa753e5742805bf52c88f4ce2, type: 3}
+--- !u!54 &5246328377314252030 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 3477834496915491114, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+  m_PrefabInstance: {fileID: 2745183841115033126}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5480160054889536385 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2470506368272385762, guid: fe1695f930a9ff048b71bedd28a85e82, type: 3}
+  m_PrefabInstance: {fileID: 2745183841115033126}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &5679071768205507545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3170,5 +3158,5 @@ SceneRoots:
   - {fileID: 3283070275152719568}
   - {fileID: 1312739462608570368}
   - {fileID: 1001441059437415482}
-  - {fileID: 3783847231857357405}
+  - {fileID: 2745183841115033126}
   - {fileID: 8232835534911666015}
