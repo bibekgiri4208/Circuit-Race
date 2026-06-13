@@ -287,7 +287,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.75
+      scalar: 1
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -5669,7 +5669,7 @@ ParticleSystem:
   m_GameObject: {fileID: 3633930329219273462}
   serializedVersion: 8
   lengthInSec: 1
-  simulationSpeed: 0.8
+  simulationSpeed: 0.5
   stopAction: 0
   cullingMode: 3
   ringBufferMode: 0
@@ -5914,7 +5914,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.75
+      scalar: 0.5
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -10542,8 +10542,8 @@ MonoBehaviour:
   meshRR: {fileID: 87382863714727847}
   centerOfMass: {fileID: 8382093289250000600}
   fallbackCOM: {x: 0, y: -0.62, z: 0.12}
-  motorTorque: 4500
-  reverseTorque: 1200
+  motorTorque: 5000
+  reverseTorque: 2000
   topSpeedKmh: 180
   driftTorqueMultiplier: 1.8
   maxSteerAngle: 42
@@ -10641,21 +10641,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TireSmokeController
   car: {fileID: 4071438367746283832}
-  rb: {fileID: 4342560386248442589}
   frontLeftSmoke: {fileID: 3199072061688111567}
   frontRightSmoke: {fileID: 7570817151611388979}
   rearLeftSmoke: {fileID: 5417734741619857112}
   rearRightSmoke: {fileID: 8541565135138452031}
-  smokeStartSpeed: 10
+  smokeStartSpeed: 30
   smokeDriftAngle: 8
-  normalSmokeRate: 35
-  driftSmokeRate: 60
-  handbrakeSmokeRate: 80
-  burnoutSmokeRate: 90
-  brakingSmokeRate: 55
-  hardAccelerationThreshold: 0.75
-  hardBrakeThreshold: 0.65
-  lowSpeedBurnoutLimit: 35
+  driftSmokeRate: 55
+  handbrakeMinSpeed: 8
+  handbrakeSmokeRate: 75
+  launchSmokeMaxSpeed: 28
+  launchThrottleThreshold: 0.75
+  launchSmokeRate: 65
+  enableFrontSmoke: 1
+  frontSmokeMultiplier: 0.45
 --- !u!1 &4000121307784763447
 GameObject:
   m_ObjectHideFlags: 0
@@ -11030,7 +11029,7 @@ ParticleSystem:
   m_GameObject: {fileID: 6821286063496451083}
   serializedVersion: 8
   lengthInSec: 1
-  simulationSpeed: 0.8
+  simulationSpeed: 0.5
   stopAction: 0
   cullingMode: 3
   ringBufferMode: 0
@@ -11275,7 +11274,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.75
+      scalar: 0.5
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -16616,7 +16615,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.75
+      scalar: 1
       minScalar: 1
       maxCurve:
         serializedVersion: 2
