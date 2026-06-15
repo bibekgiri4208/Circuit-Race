@@ -1296,7 +1296,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.75
+      scalar: 1
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -1613,7 +1613,7 @@ ParticleSystem:
         m_RotationOrder: 4
     randomizeRotationDirection: 0
     gravitySource: 0
-    maxNumParticles: 100
+    maxNumParticles: 200
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
     rotation3D: 0
@@ -10801,21 +10801,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TireSmokeController
   car: {fileID: 7937642266029738339}
-  rb: {fileID: 3477834496915491114}
   frontLeftSmoke: {fileID: 5003529381015953454}
   frontRightSmoke: {fileID: 6986538808966505037}
   rearLeftSmoke: {fileID: 7930423942723443335}
   rearRightSmoke: {fileID: 8402382695103672504}
   smokeStartSpeed: 40
   smokeDriftAngle: 10
-  normalSmokeRate: 35
   driftSmokeRate: 60
+  handbrakeMinSpeed: 8
   handbrakeSmokeRate: 80
-  burnoutSmokeRate: 90
-  brakingSmokeRate: 55
-  hardAccelerationThreshold: 0.75
-  hardBrakeThreshold: 0.65
-  lowSpeedBurnoutLimit: 35
+  launchSmokeMaxSpeed: 28
+  launchThrottleThreshold: 0.75
+  launchSmokeRate: 65
+  enableFrontSmoke: 1
+  frontSmokeMultiplier: 0.45
 --- !u!1 &5128091894253746753
 GameObject:
   m_ObjectHideFlags: 0
@@ -16247,7 +16246,7 @@ Transform:
   m_GameObject: {fileID: 8090698514653340857}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.23500025, z: 0.587}
+  m_LocalPosition: {x: 0, y: 0.163, z: 0.533}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16540,7 +16539,7 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.75
+      scalar: 1
       minScalar: 1
       maxCurve:
         serializedVersion: 2
@@ -16857,7 +16856,7 @@ ParticleSystem:
         m_RotationOrder: 4
     randomizeRotationDirection: 0
     gravitySource: 0
-    maxNumParticles: 100
+    maxNumParticles: 200
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
     rotation3D: 0
