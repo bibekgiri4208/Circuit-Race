@@ -16,22 +16,35 @@ public class SimpleAICarController : MonoBehaviour
 
     [Header("Speed")]
     public float maxSpeedKmh = 100f;
-    public float cornerSpeedKmh = 55f;
     public float motorTorque = 1800f;
     public float brakeTorque = 3500f;
 
     [Header("Steering")]
     public float maxSteerAngle = 30f;
     public float steerSensitivity = 4f;
-    public float turnSlowdownAngle = 25f;
+
+    [Header("Avoidance Sensors")]
+    public LayerMask obstacleLayers;
+    public float frontSensorLength = 10f;
+    public float sideSensorLength = 4f;
+    public float sensorHeight = 0.6f;
+    public float sensorSideOffset = 0.75f;
+    public float avoidanceSteerStrength = 0.5f;
+    public float obstacleSlowSpeedKmh = 35f;
 
     [Header("Stability")]
     public Transform centerOfMass;
     public Vector3 fallbackCOM = new Vector3(0f, -0.6f, 0.1f);
     public float downforce = 80f;
 
+    [Header("Debug")]
+    public bool showSensorRays = true;
+
     Rigidbody rb;
     float currentSteer;
+
+    bool obstacleAhead;
+    float avoidanceSteer;
 
     void Start()
     {
@@ -40,7 +53,7 @@ public class SimpleAICarController : MonoBehaviour
         rb.mass = 1200f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-        rb.angularDamping = 1.5f;
+        rb.angularDamping = 4f;
 
         rb.centerOfMass = centerOfMass != null
             ? transform.InverseTransformPoint(centerOfMass.position)
@@ -53,6 +66,7 @@ public class SimpleAICarController : MonoBehaviour
             return;
 
         HandleWaypoint();
+        HandleSensors();
         HandleSteering();
         HandleSpeed();
         ApplyDownforce();
@@ -81,6 +95,118 @@ public class SimpleAICarController : MonoBehaviour
         }
     }
 
+    void HandleSensors()
+    {
+        obstacleAhead = false;
+        avoidanceSteer = 0f;
+
+        Vector3 origin =
+            transform.position +
+            Vector3.up * sensorHeight;
+
+        Vector3 frontLeft =
+            origin - transform.right * sensorSideOffset;
+
+        Vector3 frontRight =
+            origin + transform.right * sensorSideOffset;
+
+        bool centerHit = Physics.Raycast(
+            origin,
+            transform.forward,
+            out RaycastHit hitCenter,
+            frontSensorLength,
+            obstacleLayers
+        );
+
+        bool leftHit = Physics.Raycast(
+            frontLeft,
+            transform.forward,
+            out RaycastHit hitLeft,
+            frontSensorLength,
+            obstacleLayers
+        );
+
+        bool rightHit = Physics.Raycast(
+            frontRight,
+            transform.forward,
+            out RaycastHit hitRight,
+            frontSensorLength,
+            obstacleLayers
+        );
+
+        bool sideLeftHit = Physics.Raycast(
+            origin,
+            -transform.right,
+            out RaycastHit hitSideLeft,
+            sideSensorLength,
+            obstacleLayers
+        );
+
+        bool sideRightHit = Physics.Raycast(
+            origin,
+            transform.right,
+            out RaycastHit hitSideRight,
+            sideSensorLength,
+            obstacleLayers
+        );
+
+        if (centerHit)
+            obstacleAhead = true;
+
+        if (leftHit)
+        {
+            obstacleAhead = true;
+            avoidanceSteer += avoidanceSteerStrength;
+        }
+
+        if (rightHit)
+        {
+            obstacleAhead = true;
+            avoidanceSteer -= avoidanceSteerStrength;
+        }
+
+        if (sideLeftHit)
+            avoidanceSteer += avoidanceSteerStrength;
+
+        if (sideRightHit)
+            avoidanceSteer -= avoidanceSteerStrength;
+
+        avoidanceSteer = Mathf.Clamp(avoidanceSteer, -1f, 1f);
+
+        if (showSensorRays)
+        {
+            Debug.DrawRay(
+                origin,
+                transform.forward * frontSensorLength,
+                centerHit ? Color.red : Color.green
+            );
+
+            Debug.DrawRay(
+                frontLeft,
+                transform.forward * frontSensorLength,
+                leftHit ? Color.red : Color.yellow
+            );
+
+            Debug.DrawRay(
+                frontRight,
+                transform.forward * frontSensorLength,
+                rightHit ? Color.red : Color.yellow
+            );
+
+            Debug.DrawRay(
+                origin,
+                -transform.right * sideSensorLength,
+                sideLeftHit ? Color.red : Color.cyan
+            );
+
+            Debug.DrawRay(
+                origin,
+                transform.right * sideSensorLength,
+                sideRightHit ? Color.red : Color.cyan
+            );
+        }
+    }
+
     void HandleSteering()
     {
         Transform targetWaypoint = waypoints[currentWaypointIndex];
@@ -88,8 +214,11 @@ public class SimpleAICarController : MonoBehaviour
         Vector3 localTarget =
             transform.InverseTransformPoint(targetWaypoint.position);
 
-        float steerInput =
+        float pathSteer =
             Mathf.Clamp(localTarget.x / localTarget.magnitude, -1f, 1f);
+
+        float steerInput =
+            Mathf.Clamp(pathSteer + avoidanceSteer, -1f, 1f);
 
         float targetSteer =
             steerInput * maxSteerAngle;
@@ -110,16 +239,16 @@ public class SimpleAICarController : MonoBehaviour
 
         Transform targetWaypoint = waypoints[currentWaypointIndex];
 
-        Vector3 localTarget =
-            transform.InverseTransformPoint(targetWaypoint.position);
+        float targetSpeed = maxSpeedKmh;
 
-        float cornerAngle =
-            Mathf.Abs(Mathf.Atan2(localTarget.x, localTarget.z) * Mathf.Rad2Deg);
+        AIWaypoint waypointData =
+            targetWaypoint.GetComponent<AIWaypoint>();
 
-        float targetSpeed =
-            cornerAngle > turnSlowdownAngle
-                ? cornerSpeedKmh
-                : maxSpeedKmh;
+        if (waypointData != null)
+            targetSpeed = waypointData.targetSpeedKmh;
+
+        if (obstacleAhead)
+            targetSpeed = Mathf.Min(targetSpeed, obstacleSlowSpeedKmh);
 
         if (speedKmh < targetSpeed)
         {
@@ -129,7 +258,7 @@ public class SimpleAICarController : MonoBehaviour
         else
         {
             SetMotorTorque(0f);
-            SetBrakeTorque(brakeTorque * 0.35f);
+            SetBrakeTorque(brakeTorque * 0.45f);
         }
     }
 
@@ -171,6 +300,7 @@ public class SimpleAICarController : MonoBehaviour
         if (col == null || mesh == null) return;
 
         col.GetWorldPose(out Vector3 pos, out Quaternion rot);
+
         mesh.position = pos;
         mesh.rotation = rot;
     }

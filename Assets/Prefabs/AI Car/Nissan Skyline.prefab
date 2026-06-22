@@ -1063,7 +1063,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1465507480424757868
 Transform:
   m_ObjectHideFlags: 0
@@ -1096,7 +1096,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5301511268318556649
 Transform:
   m_ObjectHideFlags: 0
@@ -1577,7 +1577,7 @@ Transform:
   m_GameObject: {fileID: 8423351086743866751}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.003, y: 0.167, z: 0.507}
+  m_LocalPosition: {x: 0.003, y: 0.078, z: 0.161}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1916,12 +1916,20 @@ MonoBehaviour:
   currentWaypointIndex: 0
   waypointReachDistance: 8
   maxSpeedKmh: 100
-  cornerSpeedKmh: 55
   motorTorque: 4000
   brakeTorque: 3500
   maxSteerAngle: 32
   steerSensitivity: 4
-  turnSlowdownAngle: 25
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  frontSensorLength: 10
+  sideSensorLength: 4
+  sensorHeight: 0.6
+  sensorSideOffset: 0.75
+  avoidanceSteerStrength: 0.5
+  obstacleSlowSpeedKmh: 35
   centerOfMass: {fileID: 6141107687275184299}
   fallbackCOM: {x: 0, y: -0.6, z: 0.1}
   downforce: 80
+  showSensorRays: 1
