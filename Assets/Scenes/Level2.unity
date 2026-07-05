@@ -10150,7 +10150,7 @@ MonoBehaviour:
   steerSensitivity: 4
   obstacleLayers:
     serializedVersion: 2
-    m_Bits: 200
+    m_Bits: 192
   frontSensorLength: 10
   sideSensorLength: 4
   sensorHeight: 0.6
