@@ -818,6 +818,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mitsubishi Evo
       objectReference: {fileID: 0}
+    - target: {fileID: 4071438367746283832, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
+      propertyPath: highSpeedSteerLimit
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8183137220687926130, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.1425147
@@ -1478,7 +1482,6 @@ MonoBehaviour:
   motorTorque: 4500
   reverseTorque: 1200
   topSpeedKmh: 180
-  driftTorqueMultiplier: 1.8
   maxSteerAngle: 42
   steerResponse: 11
   highSpeedSteerLimit: 0.82
@@ -1489,20 +1492,8 @@ MonoBehaviour:
   - {fileID: 6132700529556116526}
   - {fileID: 2516586622160392511}
   brakeLightIntensity: 2.5
-  normalRearSidewaysStiffness: 1.08
-  driftRearSidewaysStiffness: 0.65
-  handbrakeRearSidewaysStiffness: 0.5
-  frontSidewaysStiffness: 1.45
-  minDriftSpeedKmh: 25
-  driftStartAngle: 8
-  fullDriftAngle: 28
-  maxSlipAssist: 2.5
-  counterSteerStability: 2
-  handbrakeInitiationBoost: 1.8
-  gripChangeSpeed: 5
   downforce: 70
   angularDragNormal: 1.3
-  angularDragDrift: 0.55
   carVisual: {fileID: 4036326010758546140}
   bodyRollAmount: 7
   bodyPitchAmount: 3
