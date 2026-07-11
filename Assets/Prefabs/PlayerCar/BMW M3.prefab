@@ -1128,10 +1128,9 @@ MonoBehaviour:
   motorTorque: 5000
   reverseTorque: 1200
   topSpeedKmh: 180
-  driftTorqueMultiplier: 1.8
   maxSteerAngle: 32
   steerResponse: 6
-  highSpeedSteerLimit: 0.82
+  highSpeedSteerLimit: 0.5
   brakeTorque: 5000
   idleBrakeTorque: 250
   handbrakeTorque: 6500
@@ -1139,20 +1138,8 @@ MonoBehaviour:
   - {fileID: 7627017670822818662}
   - {fileID: 3815825661627632508}
   brakeLightIntensity: 2.5
-  normalRearSidewaysStiffness: 2
-  driftRearSidewaysStiffness: 0.65
-  handbrakeRearSidewaysStiffness: 0.5
-  frontSidewaysStiffness: 1.45
-  minDriftSpeedKmh: 25
-  driftStartAngle: 15
-  fullDriftAngle: 40
-  maxSlipAssist: 2
-  counterSteerStability: 2
-  handbrakeInitiationBoost: 1.8
-  gripChangeSpeed: 5
   downforce: 70
   angularDragNormal: 1.3
-  angularDragDrift: 0.55
   carVisual: {fileID: 7909172447410989626}
   bodyRollAmount: 7
   bodyPitchAmount: 3
@@ -1210,16 +1197,14 @@ MonoBehaviour:
   frontRightSmoke: {fileID: 0}
   rearLeftSmoke: {fileID: 7930423942723443335}
   rearRightSmoke: {fileID: 4092506006258889444}
-  smokeStartSpeed: 40
-  smokeDriftAngle: 10
-  driftSmokeRate: 100
-  handbrakeMinSpeed: 8
-  handbrakeSmokeRate: 80
-  launchSmokeMaxSpeed: 28
   launchThrottleThreshold: 0.75
+  launchSmokeMaxSpeed: 28
   launchSmokeRate: 65
-  enableFrontSmoke: 1
-  frontSmokeMultiplier: 0.45
+  skidMinSpeed: 15
+  brakeSkidThreshold: 0.6
+  brakeSkidSmokeRate: 80
+  lateralSlideThreshold: 2.5
+  corneringSmokeRate: 45
 --- !u!1 &5128091894253746753
 GameObject:
   m_ObjectHideFlags: 0
