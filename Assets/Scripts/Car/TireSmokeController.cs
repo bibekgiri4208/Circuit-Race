@@ -11,23 +11,19 @@ public class TireSmokeController : MonoBehaviour
     public ParticleSystem rearLeftSmoke;
     public ParticleSystem rearRightSmoke;
 
-    [Header("Drift Smoke")]
-    public float smokeStartSpeed = 12f;
-    public float smokeDriftAngle = 8f;
-    public float driftSmokeRate = 55f;
-
-    [Header("Handbrake Smoke")]
-    public float handbrakeMinSpeed = 8f;
-    public float handbrakeSmokeRate = 75f;
-
     [Header("Launch / Wheelspin Smoke")]
-    public float launchSmokeMaxSpeed = 28f;
-    public float launchThrottleThreshold = 0.75f;
+    public float launchThrottleThreshold = 0.8f;
+    public float launchSmokeMaxSpeed = 45f;
     public float launchSmokeRate = 65f;
 
-    [Header("Front Tire Smoke")]
-    public bool enableFrontSmoke = true;
-    public float frontSmokeMultiplier = 0.45f;
+    [Header("Brake Lockup / Skid Smoke")]
+    public float skidMinSpeed = 15f;
+    public float brakeSkidThreshold = 0.6f;
+    public float brakeSkidSmokeRate = 80f;
+
+    [Header("Lateral Slide / Cornering Smoke")]
+    public float lateralSlideThreshold = 2.5f; // Sideways speed in m/s before tires smoke
+    public float corneringSmokeRate = 45f;
 
     void Start()
     {
@@ -44,34 +40,37 @@ public class TireSmokeController : MonoBehaviour
     {
         if (car == null) return;
 
-        bool driftSmoke =
-            car.IsDrifting &&
-            car.SpeedKmh > smokeStartSpeed &&
-            car.DriftAngle > smokeDriftAngle;
+        // 1. Calculate physics vectors from the vehicle's Rigidbody to find lateral slide
+        Rigidbody carRb = car.GetComponent<Rigidbody>();
+        Vector3 localVelocity = car.transform.InverseTransformDirection(carRb.linearVelocity);
+        float sidewaysSpeed = Mathf.Abs(localVelocity.x);
 
-        bool handbrakeSmoke =
-            car.IsHandbraking &&
-            car.SpeedKmh > handbrakeMinSpeed;
+        // 2. Check for Racing Smoke Conditions
 
-        bool launchSmoke =
-            car.ThrottleInput > launchThrottleThreshold &&
-            car.SpeedKmh < launchSmokeMaxSpeed;
+        // Wheelspin on launch (Rear wheels)
+        bool rearWheelspin = car.ThrottleInput > launchThrottleThreshold && car.SpeedKmh < launchSmokeMaxSpeed;
 
-        float rearRate = 0f;
+        // Heavy braking lockup (All wheels)
+        bool brakeLockup = car.SpeedKmh > skidMinSpeed && (car.IsHandbraking || car.GetComponent<SimcadeCarController>().EngineLoad > brakeSkidThreshold && Input.GetKey(KeyCode.S));
+        // Note: Checking if brake input is high via generalized conditions
+
+        // Pushing too hard into a corner / Understeer / Oversteer slide (All wheels)
+        bool lateralSlide = car.SpeedKmh > skidMinSpeed && sidewaysSpeed > lateralSlideThreshold;
+
+        // 3. Assign rates dynamically based on racing events
         float frontRate = 0f;
+        float rearRate = 0f;
 
-        if (driftSmoke)
-            rearRate = Mathf.Max(rearRate, driftSmokeRate);
+        // Handle Rear Wheels (Grip loss from power, braking, or sliding)
+        if (rearWheelspin) rearRate = Mathf.Max(rearRate, launchSmokeRate);
+        if (brakeLockup) rearRate = Mathf.Max(rearRate, brakeSkidSmokeRate);
+        if (lateralSlide) rearRate = Mathf.Max(rearRate, corneringSmokeRate);
 
-        if (handbrakeSmoke)
-            rearRate = Mathf.Max(rearRate, handbrakeSmokeRate);
+        // Handle Front Wheels (Grip loss from heavy braking or severe understeer cornering)
+        if (brakeLockup) frontRate = Mathf.Max(frontRate, brakeSkidSmokeRate);
+        if (lateralSlide) frontRate = Mathf.Max(frontRate, corneringSmokeRate);
 
-        if (launchSmoke)
-            rearRate = Mathf.Max(rearRate, launchSmokeRate);
-
-        if (enableFrontSmoke && driftSmoke)
-            frontRate = rearRate * frontSmokeMultiplier;
-
+        // 4. Apply to Particle Systems
         SetSmoke(frontLeftSmoke, frontRate);
         SetSmoke(frontRightSmoke, frontRate);
         SetSmoke(rearLeftSmoke, rearRate);
@@ -81,10 +80,8 @@ public class TireSmokeController : MonoBehaviour
     void SetupSmoke(ParticleSystem smoke)
     {
         if (smoke == null) return;
-
         var emission = smoke.emission;
         emission.rateOverTime = 0f;
-
         smoke.Stop();
     }
 

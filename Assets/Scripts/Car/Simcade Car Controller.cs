@@ -5,64 +5,50 @@ using UnityEngine.InputSystem;
 public class SimcadeCarController : MonoBehaviour
 {
     [Header("Wheel Colliders")]
-    public WheelCollider wheelFL, wheelFR, wheelRL, wheelRR;
+    public WheelCollider wheelFL;
+    public WheelCollider wheelFR;
+    public WheelCollider wheelRL;
+    public WheelCollider wheelRR;
 
     [Header("Wheel Meshes")]
-    public Transform meshFL, meshFR, meshRL, meshRR;
+    public Transform meshFL;
+    public Transform meshFR;
+    public Transform meshRL;
+    public Transform meshRR;
 
     [Header("Center Of Mass")]
     public Transform centerOfMass;
-    public Vector3 fallbackCOM = new Vector3(0f, -0.62f, 0.12f);
+    public Vector3 fallbackCOM = new Vector3(0f, -0.65f, 0.05f); // Kept low and central for racing stability
 
-    [Header("Engine")]
+    [Header("Engine & Performance")]
     public float motorTorque = 2600f;
     public float reverseTorque = 1200f;
-    public float topSpeedKmh = 185f;
+    public float topSpeedKmh = 220f; // Adjusted for pure racing performance
 
-    [Header("Drift Power")]
-    public float driftTorqueMultiplier = 1.5f;
-
-    [Header("Steering")]
-    public float maxSteerAngle = 42f;
-    public float steerResponse = 11f;
-    public float highSpeedSteerLimit = 0.82f;
+    [Header("Steering (High Speed Safety)")]
+    public float maxSteerAngle = 35f;      // Tightened for racing lines
+    public float steerResponse = 12f;
+    [Range(0.1f, 0.5f)]
+    public float highSpeedSteerLimit = 0.25f; // Limits maximum turn angle at top speed to prevent rolling over
 
     [Header("Brakes")]
-    public float brakeTorque = 5000f;
-    public float idleBrakeTorque = 250f;
-    public float handbrakeTorque = 6500f;
+    public float brakeTorque = 6000f;
+    public float idleBrakeTorque = 300f;
+    public float handbrakeTorque = 8000f;
 
     [Header("Brake Lights")]
     public Light[] brakeLights;
     public float brakeLightIntensity = 2.5f;
 
-    [Header("Drift Grip")]
-    public float normalRearSidewaysStiffness = 1.08f;
-    public float driftRearSidewaysStiffness = 0.62f;
-    public float handbrakeRearSidewaysStiffness = 0.42f;
-    public float frontSidewaysStiffness = 1.55f;
-    public float minDriftSpeedKmh = 30f;
-
-    [Header("Slip Angle Drift")]
-    public float driftStartAngle = 8f;
-    public float fullDriftAngle = 28f;
-    public float maxSlipAssist = 3.5f;
-    public float counterSteerStability = 2.5f;
-    public float handbrakeInitiationBoost = 1.8f;
-
-    [Header("Grip Recovery")]
-    public float gripChangeSpeed = 5f;
-
-    [Header("Stability")]
-    public float downforce = 70f;
-    public float angularDragNormal = 1.3f;
-    public float angularDragDrift = 0.95f;
+    [Header("Aerodynamics & Stability")]
+    public float downforce = 120f;        // Increased significantly to glue the car to the track at speed
+    public float angularDragNormal = 1.8f; // Dampens erratic physics movements
 
     [Header("Visual Body Roll")]
     public Transform carVisual;
-    public float bodyRollAmount = 7f;
-    public float bodyPitchAmount = 4f;
-    public float bodyRollSpeed = 7f;
+    public float bodyRollAmount = 4f;      // Reduced for a stiffer, track-focused feel
+    public float bodyPitchAmount = 2f;
+    public float bodyRollSpeed = 8f;
 
     Rigidbody rb;
 
@@ -77,26 +63,23 @@ public class SimcadeCarController : MonoBehaviour
     public float SpeedKmh { get; private set; }
     public float ThrottleInput => throttle;
     public bool IsHandbraking => handbrake;
-    public bool IsDrifting { get; private set; }
     public float EngineLoad { get; private set; }
-    public float DriftAngle { get; private set; }
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        rb.mass = 1200f;
+        rb.mass = 1300f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.angularDamping = angularDragNormal;
 
+        // Ensure Center of Mass is very low to prevent tipping over during aggressive cornering
         rb.centerOfMass = centerOfMass != null
             ? transform.InverseTransformPoint(centerOfMass.position)
             : fallbackCOM;
 
         visualStartRot = carVisual != null ? carVisual.localRotation : Quaternion.identity;
-
-        SetupWheelFriction();
     }
 
     void Update()
@@ -105,17 +88,15 @@ public class SimcadeCarController : MonoBehaviour
         UpdateWheelMeshes();
         UpdateBodyVisual();
         HandleBrakeLights();
-
-        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
-        {
-            return;
-        }
     }
 
     void FixedUpdate()
     {
         if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
         {
+            // Reset wheel torques if race hasn't started yet
+            SetMotorTorque(0f);
+            SetBrakeTorque(idleBrakeTorque);
             return;
         }
 
@@ -123,7 +104,6 @@ public class SimcadeCarController : MonoBehaviour
 
         HandleSteering();
         HandleMotorAndBrakes();
-        HandleSlipAngleDrift();
         ApplyDownforce();
     }
 
@@ -134,25 +114,17 @@ public class SimcadeCarController : MonoBehaviour
         brakeInput = 0f;
         handbrake = false;
 
+        // Keyboard Inputs
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.wKey.isPressed)
-                throttle = 1f;
-
-            if (Keyboard.current.sKey.isPressed)
-                brakeInput = 1f;
-
-            if (Keyboard.current.aKey.isPressed)
-                steerInput = -1f;
-
-            if (Keyboard.current.dKey.isPressed)
-                steerInput = 1f;
-
-            handbrake =
-                Keyboard.current.spaceKey.isPressed ||
-                Keyboard.current.eKey.isPressed;
+            if (Keyboard.current.wKey.isPressed) throttle = 1f;
+            if (Keyboard.current.sKey.isPressed) brakeInput = 1f;
+            if (Keyboard.current.aKey.isPressed) steerInput = -1f;
+            if (Keyboard.current.dKey.isPressed) steerInput = 1f;
+            handbrake = Keyboard.current.spaceKey.isPressed || Keyboard.current.eKey.isPressed;
         }
 
+        // Controller Inputs
         if (Gamepad.current != null)
         {
             float rt = Gamepad.current.rightTrigger.ReadValue();
@@ -165,14 +137,8 @@ public class SimcadeCarController : MonoBehaviour
 
             throttle = Mathf.Pow(rt, 0.65f);
             brakeInput = Mathf.Pow(lt, 0.65f);
-
-            steerInput =
-                Mathf.Sign(stickX) *
-                Mathf.Pow(Mathf.Abs(stickX), 0.75f);
-
-            handbrake =
-                Gamepad.current.buttonSouth.isPressed ||
-                Gamepad.current.rightShoulder.isPressed;
+            steerInput = Mathf.Sign(stickX) * Mathf.Pow(Mathf.Abs(stickX), 0.75f);
+            handbrake = Gamepad.current.buttonSouth.isPressed || Gamepad.current.rightShoulder.isPressed;
         }
 
         throttle = Mathf.Clamp01(throttle);
@@ -185,26 +151,16 @@ public class SimcadeCarController : MonoBehaviour
         float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
         float speedFactor = Mathf.Clamp01(SpeedKmh / topSpeedKmh);
 
-        float torqueMultiplier = Mathf.Lerp(
-            1f,
-            0.45f,
-            speedFactor
-        );
+        // Gradually reduce engine torque near top speed to blend smoothly into the limit
+        float torqueMultiplier = Mathf.Lerp(1f, 0.1f, speedFactor);
 
         SetBrakeTorque(0f);
         SetMotorTorque(0f);
 
+        // Acceleration
         if (throttle > 0.05f && SpeedKmh < topSpeedKmh)
         {
-            float torque = motorTorque * torqueMultiplier;
-
-            if (IsDrifting)
-            {
-                torque *= driftTorqueMultiplier;
-            }
-
-            SetMotorTorque(throttle * torque);
-
+            SetMotorTorque(throttle * (motorTorque * torqueMultiplier));
             EngineLoad = throttle;
         }
         else
@@ -212,9 +168,10 @@ public class SimcadeCarController : MonoBehaviour
             EngineLoad = 0.15f;
         }
 
+        // Foot-braking / Reverse
         if (brakeInput > 0.05f)
         {
-            if (forwardSpeed > 2f)
+            if (forwardSpeed > 1f)
             {
                 SetBrakeTorque(brakeInput * brakeTorque);
             }
@@ -222,31 +179,31 @@ public class SimcadeCarController : MonoBehaviour
             {
                 SetMotorTorque(-brakeInput * reverseTorque);
             }
-
             EngineLoad = Mathf.Max(EngineLoad, brakeInput);
         }
 
+        // Natural Idle Brake/Rolling resistance
         if (throttle < 0.05f && brakeInput < 0.05f)
         {
             SetBrakeTorque(idleBrakeTorque);
         }
 
+        // Emergency Handbrake
         if (handbrake)
         {
             wheelRL.brakeTorque = handbrakeTorque;
             wheelRR.brakeTorque = handbrakeTorque;
-
-            wheelFL.brakeTorque = 0f;
-            wheelFR.brakeTorque = 0f;
         }
     }
 
     void HandleSteering()
     {
-        float speed01 = Mathf.Clamp01(SpeedKmh / topSpeedKmh);
-        float steerLimit = Mathf.Lerp(1f, highSpeedSteerLimit, speed01);
+        float speedFactor = Mathf.Clamp01(SpeedKmh / topSpeedKmh);
 
-        float targetSteer = steerInput * maxSteerAngle * steerLimit;
+        // Dynamically reduce maximum turn angle based on current speed
+        // This ensures razor-sharp turns at 30km/h and tight, safe adjustments at 200km/h
+        float dynamicSteerLimit = Mathf.Lerp(1f, highSpeedSteerLimit, speedFactor);
+        float targetSteer = steerInput * maxSteerAngle * dynamicSteerLimit;
 
         currentSteerAngle = Mathf.Lerp(
             currentSteerAngle,
@@ -258,148 +215,30 @@ public class SimcadeCarController : MonoBehaviour
         wheelFR.steerAngle = currentSteerAngle;
     }
 
-    void HandleSlipAngleDrift()
-    {
-        Vector3 localVelocity =
-            transform.InverseTransformDirection(rb.linearVelocity);
-
-        float sidewaysSpeed = localVelocity.x;
-        float forwardSpeed = Mathf.Abs(localVelocity.z);
-
-        DriftAngle =
-            Mathf.Atan2(Mathf.Abs(sidewaysSpeed), Mathf.Max(forwardSpeed, 0.1f))
-            * Mathf.Rad2Deg;
-
-        bool enoughSpeed = SpeedKmh > minDriftSpeedKmh;
-
-        bool handbrakeInitiate =
-            handbrake &&
-            enoughSpeed &&
-            Mathf.Abs(steerInput) > 0.12f;
-
-        bool naturalDrift =
-            enoughSpeed &&
-            DriftAngle > driftStartAngle &&
-            Mathf.Abs(sidewaysSpeed) > 1.5f;
-
-        bool throttleDrift =
-            enoughSpeed &&
-            throttle > 0.35f &&
-            Mathf.Abs(steerInput) > 0.55f &&
-            DriftAngle > driftStartAngle * 0.6f;
-
-        IsDrifting = handbrakeInitiate || naturalDrift || throttleDrift;
-
-        float driftAmount = Mathf.InverseLerp(
-            driftStartAngle,
-            fullDriftAngle,
-            DriftAngle
-        );
-
-        if (handbrakeInitiate)
-            driftAmount = Mathf.Max(driftAmount, 0.75f);
-
-        float targetRearGrip = normalRearSidewaysStiffness;
-
-        if (IsDrifting)
-        {
-            targetRearGrip = Mathf.Lerp(
-                normalRearSidewaysStiffness,
-                driftRearSidewaysStiffness,
-                driftAmount
-            );
-
-            if (handbrake)
-            {
-                targetRearGrip = Mathf.Lerp(
-                    driftRearSidewaysStiffness,
-                    handbrakeRearSidewaysStiffness,
-                    0.75f
-                );
-            }
-        }
-
-        SetSidewaysStiffness(wheelRL, targetRearGrip);
-        SetSidewaysStiffness(wheelRR, targetRearGrip);
-        SetSidewaysStiffness(wheelFL, frontSidewaysStiffness);
-        SetSidewaysStiffness(wheelFR, frontSidewaysStiffness);
-
-        rb.angularDamping = IsDrifting ? angularDragDrift : angularDragNormal;
-
-        if (!IsDrifting) return;
-
-        float speedFactor = Mathf.Clamp01(SpeedKmh / 150f);
-
-        float assistStrength = maxSlipAssist * driftAmount;
-        assistStrength *= Mathf.Lerp(1f, 0.65f, speedFactor);
-
-        if (handbrakeInitiate)
-            assistStrength += handbrakeInitiationBoost;
-
-        rb.AddTorque(
-            Vector3.up * steerInput * assistStrength,
-            ForceMode.Acceleration
-        );
-
-        bool counterSteering =
-            Mathf.Sign(steerInput) != Mathf.Sign(sidewaysSpeed) &&
-            Mathf.Abs(steerInput) > 0.2f &&
-            Mathf.Abs(sidewaysSpeed) > 0.5f;
-
-        if (counterSteering)
-        {
-            float yawDirection = Mathf.Sign(sidewaysSpeed);
-
-            rb.AddTorque(
-                Vector3.up * -yawDirection * counterSteerStability * driftAmount,
-                ForceMode.Acceleration
-            );
-        }
-    }
-
     void ApplyDownforce()
     {
+        // Downforce increases exponentially relative to velocity magnitude, keeping the car glued to the track
         rb.AddForce(
-            -transform.up * downforce * rb.linearVelocity.magnitude,
+            -transform.up * (downforce * rb.linearVelocity.magnitude),
             ForceMode.Force
         );
     }
 
     void SetMotorTorque(float torque)
     {
+        // For standard track driving, rear-wheel drive or all-wheel drive distribution works best. 
+        // Currently configured as RWD.
         wheelRL.motorTorque = torque;
         wheelRR.motorTorque = torque;
-        wheelFL.motorTorque = 0f;
-        wheelFR.motorTorque = 0f;
     }
 
     void SetBrakeTorque(float torque)
     {
+        // standard braking applies to all 4 wheels for stopping power
         wheelFL.brakeTorque = torque;
         wheelFR.brakeTorque = torque;
         wheelRL.brakeTorque = torque;
         wheelRR.brakeTorque = torque;
-    }
-
-    void SetSidewaysStiffness(WheelCollider wheel, float target)
-    {
-        WheelFrictionCurve friction = wheel.sidewaysFriction;
-
-        friction.stiffness = Mathf.Lerp(
-            friction.stiffness,
-            target,
-            Time.fixedDeltaTime * gripChangeSpeed
-        );
-
-        wheel.sidewaysFriction = friction;
-    }
-
-    void SetupWheelFriction()
-    {
-        SetSidewaysStiffness(wheelFL, frontSidewaysStiffness);
-        SetSidewaysStiffness(wheelFR, frontSidewaysStiffness);
-        SetSidewaysStiffness(wheelRL, normalRearSidewaysStiffness);
-        SetSidewaysStiffness(wheelRR, normalRearSidewaysStiffness);
     }
 
     void UpdateWheelMeshes()
@@ -413,7 +252,6 @@ public class SimcadeCarController : MonoBehaviour
     void UpdateSingleWheel(WheelCollider col, Transform mesh)
     {
         if (col == null || mesh == null) return;
-
         col.GetWorldPose(out Vector3 pos, out Quaternion rot);
         mesh.position = pos;
         mesh.rotation = rot;
@@ -423,15 +261,11 @@ public class SimcadeCarController : MonoBehaviour
     {
         if (carVisual == null) return;
 
-        Vector3 localVel =
-            transform.InverseTransformDirection(rb.linearVelocity);
-
+        Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
         float roll = -localVel.x * bodyRollAmount / 12f;
         float pitch = -localVel.z * bodyPitchAmount / 35f;
 
-        Quaternion target =
-            visualStartRot * Quaternion.Euler(pitch, 0f, roll);
-
+        Quaternion target = visualStartRot * Quaternion.Euler(pitch, 0f, roll);
         carVisual.localRotation = Quaternion.Slerp(
             carVisual.localRotation,
             target,
@@ -441,22 +275,13 @@ public class SimcadeCarController : MonoBehaviour
 
     void HandleBrakeLights()
     {
-        bool braking =
-            brakeInput > 0.1f ||
-            handbrake;
-
-        float targetIntensity =
-            braking ? brakeLightIntensity : 0f;
+        bool braking = brakeInput > 0.1f || handbrake;
+        float targetIntensity = braking ? brakeLightIntensity : 0f;
 
         foreach (Light light in brakeLights)
         {
             if (light == null) continue;
-
-            light.intensity = Mathf.Lerp(
-                light.intensity,
-                targetIntensity,
-                Time.deltaTime * 12f
-            );
+            light.intensity = Mathf.Lerp(light.intensity, targetIntensity, Time.deltaTime * 12f);
         }
     }
 }
