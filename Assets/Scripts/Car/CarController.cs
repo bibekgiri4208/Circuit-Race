@@ -2,7 +2,7 @@
 using Fusion;
 
 [RequireComponent(typeof(Rigidbody))]
-public class CarController : NetworkBehaviour // 1. Switched to NetworkBehaviour
+public class CarController : NetworkBehaviour 
 {
     [Header("Wheel Colliders")]
     public WheelCollider wheelFL;
@@ -52,11 +52,10 @@ public class CarController : NetworkBehaviour // 1. Switched to NetworkBehaviour
 
     Rigidbody rb;
 
-    // These values are now fetched directly from the network stream
-    private float throttle;
-    private float steerInput;
-    private float brakeInput;
-    private bool handbrake;
+    [Networked] private float throttle { get; set; }
+    [Networked] private float steerInput { get; set; }
+    [Networked] private float brakeInput { get; set; }
+    [Networked] private bool handbrake { get; set; }
 
     float currentSteerAngle;
     Quaternion visualStartRot;
@@ -94,7 +93,7 @@ public class CarController : NetworkBehaviour // 1. Switched to NetworkBehaviour
     // 2. Switched from FixedUpdate to FixedUpdateNetwork for unified physics synchronization
     public override void FixedUpdateNetwork()
     {
-        // Fetch network inputs from the Connection Handler struct
+        // Only the player with Input Authority should read from the keyboard/network-input-buffer
         if (GetInput(out NetworkInputData data))
         {
             throttle = Mathf.Clamp01(data.acceleration);
@@ -103,7 +102,7 @@ public class CarController : NetworkBehaviour // 1. Switched to NetworkBehaviour
             handbrake = data.handbrake;
         }
 
-        // Optional logic from your singleplayer codebase checking race manager status
+        // The rest of the physics logic remains the same
         if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
         {
             SetMotorTorque(0f);
@@ -117,7 +116,6 @@ public class CarController : NetworkBehaviour // 1. Switched to NetworkBehaviour
         HandleMotorAndBrakes();
         ApplyDownforce();
     }
-
     void HandleMotorAndBrakes()
     {
         float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
