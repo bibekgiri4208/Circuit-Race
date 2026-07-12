@@ -2,7 +2,7 @@
 
 public class CarAudio : MonoBehaviour
 {
-    public SimcadeCarController car;
+    public CarController car;
     public Rigidbody rb;
 
     [Header("Audio Sources")]
@@ -41,7 +41,7 @@ public class CarAudio : MonoBehaviour
     void Start()
     {
         if (car == null)
-            car = GetComponent<SimcadeCarController>();
+            car = GetComponent<CarController>();
 
         if (rb == null)
             rb = GetComponent<Rigidbody>();

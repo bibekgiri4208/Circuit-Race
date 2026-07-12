@@ -3,7 +3,7 @@ using UnityEngine;
 public class TireSmokeController : MonoBehaviour
 {
     [Header("References")]
-    public SimcadeCarController car;
+    public CarController car;
 
     [Header("Wheel Smoke")]
     public ParticleSystem frontLeftSmoke;
@@ -28,7 +28,7 @@ public class TireSmokeController : MonoBehaviour
     void Start()
     {
         if (car == null)
-            car = GetComponentInParent<SimcadeCarController>();
+            car = GetComponentInParent<CarController>();
 
         SetupSmoke(frontLeftSmoke);
         SetupSmoke(frontRightSmoke);
@@ -51,7 +51,7 @@ public class TireSmokeController : MonoBehaviour
         bool rearWheelspin = car.ThrottleInput > launchThrottleThreshold && car.SpeedKmh < launchSmokeMaxSpeed;
 
         // Heavy braking lockup (All wheels)
-        bool brakeLockup = car.SpeedKmh > skidMinSpeed && (car.IsHandbraking || car.GetComponent<SimcadeCarController>().EngineLoad > brakeSkidThreshold && Input.GetKey(KeyCode.S));
+        bool brakeLockup = car.SpeedKmh > skidMinSpeed && (car.IsHandbraking || car.GetComponent<CarController>().EngineLoad > brakeSkidThreshold && Input.GetKey(KeyCode.S));
         // Note: Checking if brake input is high via generalized conditions
 
         // Pushing too hard into a corner / Understeer / Oversteer slide (All wheels)

@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem;
+using Fusion;
 
 [RequireComponent(typeof(Rigidbody))]
-public class SimcadeCarController : MonoBehaviour
+public class CarController : NetworkBehaviour // 1. Switched to NetworkBehaviour
 {
     [Header("Wheel Colliders")]
     public WheelCollider wheelFL;
@@ -18,18 +18,18 @@ public class SimcadeCarController : MonoBehaviour
 
     [Header("Center Of Mass")]
     public Transform centerOfMass;
-    public Vector3 fallbackCOM = new Vector3(0f, -0.65f, 0.05f); // Kept low and central for racing stability
+    public Vector3 fallbackCOM = new Vector3(0f, -0.65f, 0.05f);
 
     [Header("Engine & Performance")]
     public float motorTorque = 2600f;
     public float reverseTorque = 1200f;
-    public float topSpeedKmh = 220f; // Adjusted for pure racing performance
+    public float topSpeedKmh = 220f;
 
     [Header("Steering (High Speed Safety)")]
-    public float maxSteerAngle = 35f;      // Tightened for racing lines
+    public float maxSteerAngle = 35f;
     public float steerResponse = 12f;
     [Range(0.1f, 0.5f)]
-    public float highSpeedSteerLimit = 0.25f; // Limits maximum turn angle at top speed to prevent rolling over
+    public float highSpeedSteerLimit = 0.25f;
 
     [Header("Brakes")]
     public float brakeTorque = 6000f;
@@ -41,21 +41,22 @@ public class SimcadeCarController : MonoBehaviour
     public float brakeLightIntensity = 2.5f;
 
     [Header("Aerodynamics & Stability")]
-    public float downforce = 120f;        // Increased significantly to glue the car to the track at speed
-    public float angularDragNormal = 1.8f; // Dampens erratic physics movements
+    public float downforce = 120f;
+    public float angularDragNormal = 1.8f;
 
     [Header("Visual Body Roll")]
     public Transform carVisual;
-    public float bodyRollAmount = 4f;      // Reduced for a stiffer, track-focused feel
+    public float bodyRollAmount = 4f;
     public float bodyPitchAmount = 2f;
     public float bodyRollSpeed = 8f;
 
     Rigidbody rb;
 
-    float throttle;
-    float steerInput;
-    float brakeInput;
-    bool handbrake;
+    // These values are now fetched directly from the network stream
+    private float throttle;
+    private float steerInput;
+    private float brakeInput;
+    private bool handbrake;
 
     float currentSteerAngle;
     Quaternion visualStartRot;
@@ -65,7 +66,8 @@ public class SimcadeCarController : MonoBehaviour
     public bool IsHandbraking => handbrake;
     public float EngineLoad { get; private set; }
 
-    void Start()
+    // Make sure our local simulation changes don't override the network authority
+    public override void Spawned()
     {
         rb = GetComponent<Rigidbody>();
 
@@ -74,7 +76,6 @@ public class SimcadeCarController : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.angularDamping = angularDragNormal;
 
-        // Ensure Center of Mass is very low to prevent tipping over during aggressive cornering
         rb.centerOfMass = centerOfMass != null
             ? transform.InverseTransformPoint(centerOfMass.position)
             : fallbackCOM;
@@ -82,19 +83,29 @@ public class SimcadeCarController : MonoBehaviour
         visualStartRot = carVisual != null ? carVisual.localRotation : Quaternion.identity;
     }
 
+    // Update runs locally on every machine to handle visual effects and wheel animations smoothly
     void Update()
     {
-        ReadInput();
         UpdateWheelMeshes();
         UpdateBodyVisual();
         HandleBrakeLights();
     }
 
-    void FixedUpdate()
+    // 2. Switched from FixedUpdate to FixedUpdateNetwork for unified physics synchronization
+    public override void FixedUpdateNetwork()
     {
+        // Fetch network inputs from the Connection Handler struct
+        if (GetInput(out NetworkInputData data))
+        {
+            throttle = Mathf.Clamp01(data.acceleration);
+            brakeInput = Mathf.Clamp01(data.brake);
+            steerInput = Mathf.Clamp(data.steering, -1f, 1f);
+            handbrake = data.handbrake;
+        }
+
+        // Optional logic from your singleplayer codebase checking race manager status
         if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
         {
-            // Reset wheel torques if race hasn't started yet
             SetMotorTorque(0f);
             SetBrakeTorque(idleBrakeTorque);
             return;
@@ -107,57 +118,15 @@ public class SimcadeCarController : MonoBehaviour
         ApplyDownforce();
     }
 
-    void ReadInput()
-    {
-        throttle = 0f;
-        steerInput = 0f;
-        brakeInput = 0f;
-        handbrake = false;
-
-        // Keyboard Inputs
-        if (Keyboard.current != null)
-        {
-            if (Keyboard.current.wKey.isPressed) throttle = 1f;
-            if (Keyboard.current.sKey.isPressed) brakeInput = 1f;
-            if (Keyboard.current.aKey.isPressed) steerInput = -1f;
-            if (Keyboard.current.dKey.isPressed) steerInput = 1f;
-            handbrake = Keyboard.current.spaceKey.isPressed || Keyboard.current.eKey.isPressed;
-        }
-
-        // Controller Inputs
-        if (Gamepad.current != null)
-        {
-            float rt = Gamepad.current.rightTrigger.ReadValue();
-            float lt = Gamepad.current.leftTrigger.ReadValue();
-            float stickX = Gamepad.current.leftStick.x.ReadValue();
-
-            if (rt < 0.08f) rt = 0f;
-            if (lt < 0.08f) lt = 0f;
-            if (Mathf.Abs(stickX) < 0.12f) stickX = 0f;
-
-            throttle = Mathf.Pow(rt, 0.65f);
-            brakeInput = Mathf.Pow(lt, 0.65f);
-            steerInput = Mathf.Sign(stickX) * Mathf.Pow(Mathf.Abs(stickX), 0.75f);
-            handbrake = Gamepad.current.buttonSouth.isPressed || Gamepad.current.rightShoulder.isPressed;
-        }
-
-        throttle = Mathf.Clamp01(throttle);
-        brakeInput = Mathf.Clamp01(brakeInput);
-        steerInput = Mathf.Clamp(steerInput, -1f, 1f);
-    }
-
     void HandleMotorAndBrakes()
     {
         float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
         float speedFactor = Mathf.Clamp01(SpeedKmh / topSpeedKmh);
-
-        // Gradually reduce engine torque near top speed to blend smoothly into the limit
         float torqueMultiplier = Mathf.Lerp(1f, 0.1f, speedFactor);
 
         SetBrakeTorque(0f);
         SetMotorTorque(0f);
 
-        // Acceleration
         if (throttle > 0.05f && SpeedKmh < topSpeedKmh)
         {
             SetMotorTorque(throttle * (motorTorque * torqueMultiplier));
@@ -168,7 +137,6 @@ public class SimcadeCarController : MonoBehaviour
             EngineLoad = 0.15f;
         }
 
-        // Foot-braking / Reverse
         if (brakeInput > 0.05f)
         {
             if (forwardSpeed > 1f)
@@ -182,13 +150,11 @@ public class SimcadeCarController : MonoBehaviour
             EngineLoad = Mathf.Max(EngineLoad, brakeInput);
         }
 
-        // Natural Idle Brake/Rolling resistance
         if (throttle < 0.05f && brakeInput < 0.05f)
         {
             SetBrakeTorque(idleBrakeTorque);
         }
 
-        // Emergency Handbrake
         if (handbrake)
         {
             wheelRL.brakeTorque = handbrakeTorque;
@@ -199,16 +165,13 @@ public class SimcadeCarController : MonoBehaviour
     void HandleSteering()
     {
         float speedFactor = Mathf.Clamp01(SpeedKmh / topSpeedKmh);
-
-        // Dynamically reduce maximum turn angle based on current speed
-        // This ensures razor-sharp turns at 30km/h and tight, safe adjustments at 200km/h
         float dynamicSteerLimit = Mathf.Lerp(1f, highSpeedSteerLimit, speedFactor);
         float targetSteer = steerInput * maxSteerAngle * dynamicSteerLimit;
 
         currentSteerAngle = Mathf.Lerp(
             currentSteerAngle,
             targetSteer,
-            Time.fixedDeltaTime * steerResponse
+            Runner.DeltaTime * steerResponse // Switched to Runner.DeltaTime for network safety
         );
 
         wheelFL.steerAngle = currentSteerAngle;
@@ -217,7 +180,6 @@ public class SimcadeCarController : MonoBehaviour
 
     void ApplyDownforce()
     {
-        // Downforce increases exponentially relative to velocity magnitude, keeping the car glued to the track
         rb.AddForce(
             -transform.up * (downforce * rb.linearVelocity.magnitude),
             ForceMode.Force
@@ -226,15 +188,12 @@ public class SimcadeCarController : MonoBehaviour
 
     void SetMotorTorque(float torque)
     {
-        // For standard track driving, rear-wheel drive or all-wheel drive distribution works best. 
-        // Currently configured as RWD.
         wheelRL.motorTorque = torque;
         wheelRR.motorTorque = torque;
     }
 
     void SetBrakeTorque(float torque)
     {
-        // standard braking applies to all 4 wheels for stopping power
         wheelFL.brakeTorque = torque;
         wheelFR.brakeTorque = torque;
         wheelRL.brakeTorque = torque;
