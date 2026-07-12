@@ -1567,10 +1567,9 @@ MonoBehaviour:
   motorTorque: 4500
   reverseTorque: 1200
   topSpeedKmh: 180
-  driftTorqueMultiplier: 1.8
   maxSteerAngle: 35
   steerResponse: 11
-  highSpeedSteerLimit: 0.82
+  highSpeedSteerLimit: 0.5
   brakeTorque: 5000
   idleBrakeTorque: 250
   handbrakeTorque: 6500
@@ -1578,20 +1577,8 @@ MonoBehaviour:
   - {fileID: 6536410283112098662}
   - {fileID: 6957030637702143365}
   brakeLightIntensity: 2.5
-  normalRearSidewaysStiffness: 1.25
-  driftRearSidewaysStiffness: 0.95
-  handbrakeRearSidewaysStiffness: 0.8
-  frontSidewaysStiffness: 1.55
-  minDriftSpeedKmh: 40
-  driftStartAngle: 8
-  fullDriftAngle: 28
-  maxSlipAssist: 0.5
-  counterSteerStability: 0.3
-  handbrakeInitiationBoost: 0
-  gripChangeSpeed: 5
   downforce: 70
   angularDragNormal: 1.6
-  angularDragDrift: 1.3
   carVisual: {fileID: 4310077519567467934}
   bodyRollAmount: 7
   bodyPitchAmount: 3
