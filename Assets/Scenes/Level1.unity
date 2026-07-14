@@ -74591,8 +74591,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7890571af1110e74f8b98a3ba7ce0387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkCameraFollow
-  offset: {x: 0, y: 3, z: -6}
-  smoothSpeed: 10
+  baseDistance: 4
+  maxDistance: 2
+  height: 1.8
+  speedForMaxDistance: 50
+  distanceSmoothSpeed: 4
+  shakeStartSpeed: 50
+  maxShakeSpeed: 180
+  maxShakeAmount: 0.05
+  shakeFrequency: 22
+  positionSmoothSpeed: 8
+  rotationSmoothSpeed: 6
+  velocityFollowStrength: 0.75
+  lookHeight: 1.4
+  lookForwardOffset: 2
+  cameraTiltAmount: 10
+  tiltSmoothSpeed: 5
 --- !u!33 &5699453257042640794
 MeshFilter:
   m_ObjectHideFlags: 0
