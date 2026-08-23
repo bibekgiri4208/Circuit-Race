@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
-using Fusion;
 
 [RequireComponent(typeof(Rigidbody))]
-public class CarController : NetworkBehaviour 
+public class CarController : MonoBehaviour
 {
     [Header("Wheel Colliders")]
     public WheelCollider wheelFL;
@@ -52,10 +51,10 @@ public class CarController : NetworkBehaviour
 
     Rigidbody rb;
 
-    [Networked] private float throttle { get; set; }
-    [Networked] private float steerInput { get; set; }
-    [Networked] private float brakeInput { get; set; }
-    [Networked] private bool handbrake { get; set; }
+    private float throttle;
+    private float steerInput;
+    private float brakeInput;
+    private bool handbrake;
 
     float currentSteerAngle;
     Quaternion visualStartRot;
@@ -65,8 +64,7 @@ public class CarController : NetworkBehaviour
     public bool IsHandbraking => handbrake;
     public float EngineLoad { get; private set; }
 
-    // Make sure our local simulation changes don't override the network authority
-    public override void Spawned()
+    void Start()
     {
         rb = GetComponent<Rigidbody>();
 
@@ -90,19 +88,13 @@ public class CarController : NetworkBehaviour
         HandleBrakeLights();
     }
 
-    // 2. Switched from FixedUpdate to FixedUpdateNetwork for unified physics synchronization
-    public override void FixedUpdateNetwork()
+    void FixedUpdate()
     {
-        // Only the player with Input Authority should read from the keyboard/network-input-buffer
-        if (GetInput(out NetworkInputData data))
-        {
-            throttle = Mathf.Clamp01(data.acceleration);
-            brakeInput = Mathf.Clamp01(data.brake);
-            steerInput = Mathf.Clamp(data.steering, -1f, 1f);
-            handbrake = data.handbrake;
-        }
+        throttle = Mathf.Clamp01(Input.GetAxis("Vertical"));
+        steerInput = Mathf.Clamp(Input.GetAxis("Horizontal"), -1f, 1f);
+        brakeInput = Mathf.Clamp01(-Input.GetAxis("Vertical"));
+        handbrake = Input.GetKey(KeyCode.Space);
 
-        // The rest of the physics logic remains the same
         if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
         {
             SetMotorTorque(0f);
@@ -169,7 +161,7 @@ public class CarController : NetworkBehaviour
         currentSteerAngle = Mathf.Lerp(
             currentSteerAngle,
             targetSteer,
-            Runner.DeltaTime * steerResponse // Switched to Runner.DeltaTime for network safety
+            Time.fixedDeltaTime * steerResponse
         );
 
         wheelFL.steerAngle = currentSteerAngle;
