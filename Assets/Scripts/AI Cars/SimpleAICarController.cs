@@ -65,6 +65,13 @@ public class SimpleAICarController : MonoBehaviour
         if (waypoints == null || waypoints.Length == 0)
             return;
 
+        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
+        {
+            SetMotorTorque(0f);
+            SetBrakeTorque(300f);
+            return;
+        }
+
         HandleWaypoint();
         HandleSensors();
         HandleSteering();

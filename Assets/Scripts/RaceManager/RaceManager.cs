@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class RaceManager : MonoBehaviour
@@ -36,6 +37,9 @@ public class RaceManager : MonoBehaviour
         raceStarted = false;
         raceFinished = false;
 
+        if (countdownText == null)
+            CreateCountdownUI();
+
         if (countdownText != null)
         {
             countdownText.gameObject.SetActive(true);
@@ -46,6 +50,37 @@ public class RaceManager : MonoBehaviour
             countdownCanvasGroup.alpha = 0f;
 
         StartCoroutine(StartCountdown());
+    }
+
+    void CreateCountdownUI()
+    {
+        Canvas canvas = FindAnyObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            GameObject canvasGO = new GameObject("CountdownCanvas");
+            canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 50;
+            canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
+        }
+
+        GameObject textGO = new GameObject("CountdownText");
+        textGO.transform.SetParent(canvas.transform, false);
+        RectTransform rect = textGO.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(400, 200);
+        countdownText = textGO.AddComponent<TextMeshProUGUI>();
+        countdownText.fontSize = 180;
+        countdownText.fontStyle = FontStyles.Bold;
+        countdownText.color = new Color(1f, 0.984f, 0f, 1f);
+        countdownText.alignment = TextAlignmentOptions.Center;
+        countdownText.text = "";
+
+        countdownCanvasGroup = textGO.AddComponent<CanvasGroup>();
+        countdownCanvasGroup.alpha = 0f;
     }
 
     private IEnumerator StartCountdown()

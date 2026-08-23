@@ -3555,7 +3555,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1466917381}
   m_Mesh: {fileID: -4145787391283708427, guid: b8be0b7ab9585c7459c5e2cd00c16b9e, type: 3}
-
 --- !u!1 &1486512927
 GameObject:
   m_ObjectHideFlags: 0
@@ -3739,7 +3738,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1602712193
 Transform:
   m_ObjectHideFlags: 0
@@ -117000,5 +116999,4 @@ SceneRoots:
   - {fileID: 828379028}
   - {fileID: 1602712193}
   - {fileID: 2616065197398875270}
-  - {fileID: 1481170554}
   - {fileID: 280867165}
