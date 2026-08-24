@@ -84,7 +84,7 @@ public class PlayerLapTracker : MonoBehaviour
 
         if (RaceManager.Instance != null)
         {
-            RaceManager.Instance.raceFinished = true;
+            RaceManager.Instance.StartFinishSequence();
         }
 
         if (lapText != null)
