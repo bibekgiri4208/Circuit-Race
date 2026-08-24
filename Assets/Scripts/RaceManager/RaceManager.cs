@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
@@ -27,6 +28,19 @@ public class RaceManager : MonoBehaviour
     public float popScale = 1.35f;
     public float normalScale = 1f;
 
+    [Header("Finish Sequence")]
+    public float finishTextStayTime = 2f;
+    public float cinematicDuration = 4f;
+    public float cinematicOrbitHeight = 2.5f;
+    public float cinematicOrbitDistance = 7f;
+    public float cinematicOrbitSpeed = 40f;
+    public float cinematicLookHeight = 1.2f;
+
+    private CarSpawner carSpawner;
+    private ChaseCamera chaseCam;
+    private TextMeshProUGUI finishText;
+    private CanvasGroup finishTextCanvasGroup;
+
     private void Awake()
     {
         Instance = this;
@@ -36,6 +50,8 @@ public class RaceManager : MonoBehaviour
     {
         raceStarted = false;
         raceFinished = false;
+
+        carSpawner = FindAnyObjectByType<CarSpawner>();
 
         if (countdownText == null)
             CreateCountdownUI();
@@ -50,6 +66,13 @@ public class RaceManager : MonoBehaviour
             countdownCanvasGroup.alpha = 0f;
 
         StartCoroutine(StartCountdown());
+    }
+
+    public void StartFinishSequence()
+    {
+        if (raceFinished) return;
+        raceFinished = true;
+        StartCoroutine(FinishRaceSequence());
     }
 
     void CreateCountdownUI()
@@ -196,5 +219,126 @@ public class RaceManager : MonoBehaviour
         }
 
         countdownCanvasGroup.alpha = 0f;
+    }
+
+    private IEnumerator FinishRaceSequence()
+    {
+        GameObject playerCar = carSpawner != null ? carSpawner.SpawnedCar : null;
+
+        if (playerCar == null)
+        {
+            Debug.LogWarning("No player car found for finish sequence.");
+            yield break;
+        }
+
+        // Stop the car
+        CarController carController = playerCar.GetComponent<CarController>();
+        if (carController != null)
+            carController.enabled = false;
+
+        Rigidbody rb = playerCar.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // Disable chase camera
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+            chaseCam = mainCam.GetComponent<ChaseCamera>();
+        if (chaseCam != null)
+            chaseCam.enabled = false;
+
+        // Show "RACE FINISHED" text
+        CreateFinishText();
+
+        float textTimer = 0f;
+        while (textTimer < finishTextStayTime)
+        {
+            textTimer += Time.deltaTime;
+            float t = Mathf.Clamp01(textTimer / 0.5f);
+            if (finishTextCanvasGroup != null)
+                finishTextCanvasGroup.alpha = t;
+            yield return null;
+        }
+
+        // Cinematic camera orbit
+        if (mainCam != null && playerCar != null)
+        {
+            float elapsed = 0f;
+            Vector3 carCenter = playerCar.transform.position + Vector3.up * 0.5f;
+
+            while (elapsed < cinematicDuration)
+            {
+                elapsed += Time.deltaTime;
+                float angle = (elapsed / cinematicDuration) * 360f * (cinematicOrbitSpeed / 360f);
+
+                Vector3 offset = new Vector3(
+                    Mathf.Sin(angle * Mathf.Deg2Rad) * cinematicOrbitDistance,
+                    cinematicOrbitHeight,
+                    Mathf.Cos(angle * Mathf.Deg2Rad) * cinematicOrbitDistance
+                );
+
+                mainCam.transform.position = carCenter + offset;
+                mainCam.transform.LookAt(carCenter + Vector3.up * cinematicLookHeight);
+
+                yield return null;
+            }
+        }
+
+        // Fade out finish text
+        if (finishTextCanvasGroup != null)
+        {
+            float fadeTimer = 0f;
+            while (fadeTimer < 0.5f)
+            {
+                fadeTimer += Time.deltaTime;
+                finishTextCanvasGroup.alpha = Mathf.Lerp(1f, 0f, fadeTimer / 0.5f);
+                yield return null;
+            }
+        }
+
+        // Return to garage
+        if (LoadingScreen.Instance != null)
+            LoadingScreen.Instance.LoadScene("Garage");
+        else
+            SceneManager.LoadScene("Garage");
+    }
+
+    private void CreateFinishText()
+    {
+        Canvas canvas = FindAnyObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            GameObject canvasGO = new GameObject("FinishCanvas");
+            canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 90;
+            canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
+        }
+
+        GameObject textGO = new GameObject("FinishText");
+        textGO.transform.SetParent(canvas.transform, false);
+        RectTransform rect = textGO.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(800, 150);
+        finishText = textGO.AddComponent<TextMeshProUGUI>();
+        finishText.text = "RACE FINISHED!";
+        finishText.fontSize = 90;
+        finishText.fontStyle = FontStyles.Bold;
+        finishText.color = new Color(1f, 0.84f, 0f, 1f);
+        finishText.alignment = TextAlignmentOptions.Center;
+        finishText.enableAutoSizing = false;
+
+        // Add outline for readability
+        finishText.outlineWidth = 0.15f;
+        finishText.outlineColor = new Color(0f, 0f, 0f, 1f);
+
+        finishTextCanvasGroup = textGO.AddComponent<CanvasGroup>();
+        finishTextCanvasGroup.alpha = 0f;
     }
 }
