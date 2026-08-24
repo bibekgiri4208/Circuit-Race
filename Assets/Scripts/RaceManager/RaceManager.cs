@@ -302,22 +302,39 @@ public class RaceManager : MonoBehaviour
             canvasGO.AddComponent<GraphicRaycaster>();
         }
 
+        // Dark backdrop panel
+        GameObject panelGO = new GameObject("Backdrop");
+        panelGO.transform.SetParent(canvas.transform, false);
+        RectTransform panelRect = panelGO.AddComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = new Vector2(0f, 25f);
+        panelRect.sizeDelta = new Vector2(700, 200);
+        Image panelImg = panelGO.AddComponent<Image>();
+        panelImg.color = new Color(0f, 0f, 0f, 0.7f);
+
+        // Top gold line
+        CreateLine(canvas.transform, "TopLine", new Vector2(0f, 115f), new Vector2(600f, 3f), new Color(1f, 0.84f, 0f, 1f));
+
+        // Bottom gold line
+        CreateLine(canvas.transform, "BottomLine", new Vector2(0f, -55f), new Vector2(600f, 3f), new Color(1f, 0.84f, 0f, 1f));
+
         // "RACE FINISHED" text
         GameObject textGO = new GameObject("FinishText");
         textGO.transform.SetParent(canvas.transform, false);
         RectTransform rect = textGO.AddComponent<RectTransform>();
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(800, 150);
+        rect.anchoredPosition = new Vector2(0f, 65f);
+        rect.sizeDelta = new Vector2(700, 80);
         finishText = textGO.AddComponent<TextMeshProUGUI>();
         finishText.text = "RACE FINISHED!";
-        finishText.fontSize = 90;
+        finishText.fontSize = 68;
         finishText.fontStyle = FontStyles.Bold;
         finishText.color = new Color(1f, 0.84f, 0f, 1f);
         finishText.alignment = TextAlignmentOptions.Center;
-        finishText.outlineWidth = 0.15f;
-        finishText.outlineColor = new Color(0f, 0f, 0f, 1f);
+        finishText.outlineWidth = 0.2f;
+        finishText.outlineColor = new Color(0.6f, 0.3f, 0f, 1f);
         finishText.alpha = 0f;
 
         finishTextCanvasGroup = textGO.AddComponent<CanvasGroup>();
@@ -329,15 +346,15 @@ public class RaceManager : MonoBehaviour
         RectTransform posRect = posGO.AddComponent<RectTransform>();
         posRect.anchorMin = new Vector2(0.5f, 0.5f);
         posRect.anchorMax = new Vector2(0.5f, 0.5f);
-        posRect.anchoredPosition = new Vector2(0f, -100f);
-        posRect.sizeDelta = new Vector2(600, 80);
+        posRect.anchoredPosition = new Vector2(0f, 10f);
+        posRect.sizeDelta = new Vector2(600, 60);
         positionText = posGO.AddComponent<TextMeshProUGUI>();
         positionText.text = "FINISHED 1st!";
-        positionText.fontSize = 55;
+        positionText.fontSize = 46;
         positionText.fontStyle = FontStyles.Bold;
-        positionText.color = Color.white;
+        positionText.color = new Color(1f, 1f, 1f, 1f);
         positionText.alignment = TextAlignmentOptions.Center;
-        positionText.outlineWidth = 0.12f;
+        positionText.outlineWidth = 0.15f;
         positionText.outlineColor = new Color(0f, 0f, 0f, 1f);
         positionText.alpha = 0f;
 
@@ -387,6 +404,19 @@ public class RaceManager : MonoBehaviour
             case 3: return "3rd";
             default: return pos + "th";
         }
+    }
+
+    private void CreateLine(Transform parent, string name, Vector2 position, Vector2 size, Color color)
+    {
+        GameObject lineGO = new GameObject(name);
+        lineGO.transform.SetParent(parent, false);
+        RectTransform lineRect = lineGO.AddComponent<RectTransform>();
+        lineRect.anchorMin = new Vector2(0.5f, 0.5f);
+        lineRect.anchorMax = new Vector2(0.5f, 0.5f);
+        lineRect.anchoredPosition = position;
+        lineRect.sizeDelta = size;
+        Image lineImg = lineGO.AddComponent<Image>();
+        lineImg.color = color;
     }
 
     private IEnumerator FadeToBlack()
