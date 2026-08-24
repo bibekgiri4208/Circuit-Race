@@ -11,6 +11,7 @@ public class RaceManager : MonoBehaviour
     [Header("Race State")]
     public bool raceStarted = false;
     public bool raceFinished = false;
+    public int playerPosition = 0;
 
     [Header("Countdown UI")]
     public TextMeshProUGUI countdownText;
@@ -30,16 +31,20 @@ public class RaceManager : MonoBehaviour
 
     [Header("Finish Sequence")]
     public float finishTextStayTime = 2f;
-    public float cinematicDuration = 4f;
-    public float cinematicOrbitHeight = 2.5f;
-    public float cinematicOrbitDistance = 7f;
-    public float cinematicOrbitSpeed = 40f;
-    public float cinematicLookHeight = 1.2f;
+    public float orbitDuration = 3f;
+    public float orbitHeight = 3f;
+    public float orbitDistance = 8f;
+    public float orbitSpeed = 100f;
+    public float fadeToBlackDuration = 0.8f;
 
     private CarSpawner carSpawner;
     private ChaseCamera chaseCam;
     private TextMeshProUGUI finishText;
     private CanvasGroup finishTextCanvasGroup;
+    private TextMeshProUGUI positionText;
+    private CanvasGroup positionTextCanvasGroup;
+    private GameObject fadeOverlay;
+    private CanvasGroup fadeOverlayCanvasGroup;
 
     private void Awake()
     {
@@ -231,7 +236,6 @@ public class RaceManager : MonoBehaviour
             yield break;
         }
 
-        // Stop the car
         CarController carController = playerCar.GetComponent<CarController>();
         if (carController != null)
             carController.enabled = false;
@@ -243,70 +247,49 @@ public class RaceManager : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // Disable chase camera
         Camera mainCam = Camera.main;
         if (mainCam != null)
             chaseCam = mainCam.GetComponent<ChaseCamera>();
         if (chaseCam != null)
             chaseCam.enabled = false;
 
-        // Show "RACE FINISHED" text
-        CreateFinishText();
+        CreateFinishUI();
+        ShowFinishText();
 
-        float textTimer = 0f;
-        while (textTimer < finishTextStayTime)
+        Vector3 carCenter = playerCar.transform.position + Vector3.up * 0.8f;
+        float startAngle = Mathf.Atan2(
+            mainCam.transform.position.x - carCenter.x,
+            mainCam.transform.position.z - carCenter.z
+        ) * Mathf.Rad2Deg;
+
+        float elapsed = 0f;
+        while (elapsed < orbitDuration)
         {
-            textTimer += Time.deltaTime;
-            float t = Mathf.Clamp01(textTimer / 0.5f);
-            if (finishTextCanvasGroup != null)
-                finishTextCanvasGroup.alpha = t;
+            elapsed += Time.deltaTime;
+            float t = elapsed / orbitDuration;
+            float angle = startAngle + t * orbitSpeed;
+
+            Vector3 offset = new Vector3(
+                Mathf.Sin(angle * Mathf.Deg2Rad) * orbitDistance,
+                orbitHeight,
+                Mathf.Cos(angle * Mathf.Deg2Rad) * orbitDistance
+            );
+
+            mainCam.transform.position = carCenter + offset;
+            mainCam.transform.LookAt(carCenter + Vector3.up * 0.5f);
             yield return null;
         }
 
-        // Cinematic camera orbit
-        if (mainCam != null && playerCar != null)
-        {
-            float elapsed = 0f;
-            Vector3 carCenter = playerCar.transform.position + Vector3.up * 0.5f;
+        yield return new WaitForSeconds(0.5f);
+        yield return StartCoroutine(FadeToBlack());
 
-            while (elapsed < cinematicDuration)
-            {
-                elapsed += Time.deltaTime;
-                float angle = (elapsed / cinematicDuration) * 360f * (cinematicOrbitSpeed / 360f);
-
-                Vector3 offset = new Vector3(
-                    Mathf.Sin(angle * Mathf.Deg2Rad) * cinematicOrbitDistance,
-                    cinematicOrbitHeight,
-                    Mathf.Cos(angle * Mathf.Deg2Rad) * cinematicOrbitDistance
-                );
-
-                mainCam.transform.position = carCenter + offset;
-                mainCam.transform.LookAt(carCenter + Vector3.up * cinematicLookHeight);
-
-                yield return null;
-            }
-        }
-
-        // Fade out finish text
-        if (finishTextCanvasGroup != null)
-        {
-            float fadeTimer = 0f;
-            while (fadeTimer < 0.5f)
-            {
-                fadeTimer += Time.deltaTime;
-                finishTextCanvasGroup.alpha = Mathf.Lerp(1f, 0f, fadeTimer / 0.5f);
-                yield return null;
-            }
-        }
-
-        // Return to garage
         if (LoadingScreen.Instance != null)
             LoadingScreen.Instance.LoadScene("Garage");
         else
             SceneManager.LoadScene("Garage");
     }
 
-    private void CreateFinishText()
+    private void CreateFinishUI()
     {
         Canvas canvas = FindAnyObjectByType<Canvas>();
         if (canvas == null)
@@ -319,6 +302,7 @@ public class RaceManager : MonoBehaviour
             canvasGO.AddComponent<GraphicRaycaster>();
         }
 
+        // "RACE FINISHED" text
         GameObject textGO = new GameObject("FinishText");
         textGO.transform.SetParent(canvas.transform, false);
         RectTransform rect = textGO.AddComponent<RectTransform>();
@@ -332,13 +316,91 @@ public class RaceManager : MonoBehaviour
         finishText.fontStyle = FontStyles.Bold;
         finishText.color = new Color(1f, 0.84f, 0f, 1f);
         finishText.alignment = TextAlignmentOptions.Center;
-        finishText.enableAutoSizing = false;
-
-        // Add outline for readability
         finishText.outlineWidth = 0.15f;
         finishText.outlineColor = new Color(0f, 0f, 0f, 1f);
+        finishText.alpha = 0f;
 
         finishTextCanvasGroup = textGO.AddComponent<CanvasGroup>();
         finishTextCanvasGroup.alpha = 0f;
+
+        // Position text
+        GameObject posGO = new GameObject("PositionText");
+        posGO.transform.SetParent(canvas.transform, false);
+        RectTransform posRect = posGO.AddComponent<RectTransform>();
+        posRect.anchorMin = new Vector2(0.5f, 0.5f);
+        posRect.anchorMax = new Vector2(0.5f, 0.5f);
+        posRect.anchoredPosition = new Vector2(0f, -100f);
+        posRect.sizeDelta = new Vector2(600, 80);
+        positionText = posGO.AddComponent<TextMeshProUGUI>();
+        positionText.text = "FINISHED 1st!";
+        positionText.fontSize = 55;
+        positionText.fontStyle = FontStyles.Bold;
+        positionText.color = Color.white;
+        positionText.alignment = TextAlignmentOptions.Center;
+        positionText.outlineWidth = 0.12f;
+        positionText.outlineColor = new Color(0f, 0f, 0f, 1f);
+        positionText.alpha = 0f;
+
+        positionTextCanvasGroup = posGO.AddComponent<CanvasGroup>();
+        positionTextCanvasGroup.alpha = 0f;
+
+        // Fade to black overlay
+        GameObject fadeGO = new GameObject("FadeOverlay");
+        fadeGO.transform.SetParent(canvas.transform, false);
+        RectTransform fadeRect = fadeGO.AddComponent<RectTransform>();
+        fadeRect.anchorMin = Vector2.zero;
+        fadeRect.anchorMax = Vector2.one;
+        fadeRect.offsetMin = Vector2.zero;
+        fadeRect.offsetMax = Vector2.zero;
+        fadeOverlay = fadeGO;
+
+        Image fadeImg = fadeGO.AddComponent<Image>();
+        fadeImg.color = Color.black;
+
+        fadeOverlayCanvasGroup = fadeGO.AddComponent<CanvasGroup>();
+        fadeOverlayCanvasGroup.alpha = 0f;
+    }
+
+    private void ShowFinishText()
+    {
+        if (finishText != null)
+            finishText.alpha = 1f;
+        if (finishTextCanvasGroup != null)
+            finishTextCanvasGroup.alpha = 1f;
+
+        if (positionText != null)
+        {
+            string ordinal = GetOrdinal(playerPosition);
+            positionText.text = "FINISHED " + ordinal + "!";
+            positionText.alpha = 1f;
+        }
+        if (positionTextCanvasGroup != null)
+            positionTextCanvasGroup.alpha = 1f;
+    }
+
+    private string GetOrdinal(int pos)
+    {
+        switch (pos)
+        {
+            case 1: return "1st";
+            case 2: return "2nd";
+            case 3: return "3rd";
+            default: return pos + "th";
+        }
+    }
+
+    private IEnumerator FadeToBlack()
+    {
+        if (fadeOverlayCanvasGroup == null) yield break;
+
+        float t = 0f;
+        while (t < fadeToBlackDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            fadeOverlayCanvasGroup.alpha = Mathf.Clamp01(t / fadeToBlackDuration);
+            yield return null;
+        }
+
+        fadeOverlayCanvasGroup.alpha = 1f;
     }
 }
