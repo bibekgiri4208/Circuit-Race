@@ -28,16 +28,12 @@ public class PauseMenu : MonoBehaviour
 
     void CreateUI()
     {
-        Canvas canvas = FindAnyObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            GameObject canvasGO = new GameObject("PauseCanvas");
-            canvas = canvasGO.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
-            canvasGO.AddComponent<CanvasScaler>();
-            canvasGO.AddComponent<GraphicRaycaster>();
-        }
+        GameObject canvasGO = new GameObject("PauseCanvas");
+        Canvas canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 100;
+        canvasGO.AddComponent<CanvasScaler>();
+        canvasGO.AddComponent<GraphicRaycaster>();
 
         // --- Pause Button (top-left) ---
         pauseButtonObj = CreateButton(canvas.transform, "PauseBtn", "||",
@@ -105,14 +101,20 @@ public class PauseMenu : MonoBehaviour
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        if (LoadingScreen.Instance != null)
+            LoadingScreen.Instance.LoadScene(SceneManager.GetActiveScene().name);
+        else
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void Quit()
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        SceneManager.LoadScene("Garage");
+        if (LoadingScreen.Instance != null)
+            LoadingScreen.Instance.LoadScene("Garage");
+        else
+            SceneManager.LoadScene("Garage");
     }
 
     GameObject CreateButton(Transform parent, string name, string label,
