@@ -95,7 +95,7 @@ public class CarController : MonoBehaviour
         brakeInput = Mathf.Clamp01(-Input.GetAxis("Vertical"));
         handbrake = Input.GetKey(KeyCode.Space);
 
-        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
+        if (RaceManager.Instance != null && (!RaceManager.Instance.raceStarted || RaceManager.Instance.raceFinished))
         {
             SetMotorTorque(0f);
             SetBrakeTorque(idleBrakeTorque);

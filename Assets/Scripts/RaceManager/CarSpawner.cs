@@ -5,6 +5,8 @@ public class CarSpawner : MonoBehaviour
     [SerializeField] private GameObject[] carsPrefab;
     [SerializeField] private ChaseCamera cameraScript;
 
+    public GameObject SpawnedCar { get; private set; }
+
     void Start()
     {
         SpawnCar();
@@ -27,23 +29,23 @@ public class CarSpawner : MonoBehaviour
             return;
         }
 
-        GameObject car = Instantiate(
+        SpawnedCar = Instantiate(
             carsPrefab[index],
             transform.position,
             transform.rotation
         );
 
-        Rigidbody rb = car.GetComponent<Rigidbody>();
+        Rigidbody rb = SpawnedCar.GetComponent<Rigidbody>();
 
         if (cameraScript != null)
         {
-            cameraScript.target = car.transform;
+            cameraScript.target = SpawnedCar.transform;
             cameraScript.targetRb = rb;
         }
 
         Skidmarks skidmarksController = FindAnyObjectByType<Skidmarks>();
 
-        WheelSkid[] wheelSkids = car.GetComponentsInChildren<WheelSkid>(true);
+        WheelSkid[] wheelSkids = SpawnedCar.GetComponentsInChildren<WheelSkid>(true);
 
         foreach (WheelSkid wheelSkid in wheelSkids)
         {

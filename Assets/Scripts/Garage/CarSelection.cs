@@ -25,6 +25,15 @@ public class CarSelection : MonoBehaviour
 
     int currentCarIndex;
 
+    void EnsureLoadingScreen()
+    {
+        if (LoadingScreen.Instance == null)
+        {
+            GameObject go = new GameObject("LoadingScreen");
+            go.AddComponent<LoadingScreen>();
+        }
+    }
+
     void Awake()
     {
         if (cars == null || cars.Length == 0)
@@ -123,17 +132,20 @@ public class CarSelection : MonoBehaviour
     // Track Selection Button Functions
     public void LoadTrack1()
     {
-        SceneManager.LoadScene("Level1"); // Or whatever your Track 1 scene name is
+        EnsureLoadingScreen();
+        LoadingScreen.Instance.LoadScene("Level1");
     }
 
     public void LoadTrack2()
     {
-        SceneManager.LoadScene("Level2");
+        EnsureLoadingScreen();
+        LoadingScreen.Instance.LoadScene("Level2");
     }
 
     public void LoadTrack3()
     {
-        SceneManager.LoadScene("Level3");
+        EnsureLoadingScreen();
+        LoadingScreen.Instance.LoadScene("Level3");
     }
 
     public void PracticeButton()
@@ -142,10 +154,10 @@ public class CarSelection : MonoBehaviour
 
         currentCarIndex = Mathf.Clamp(currentCarIndex, 0, cars.Length - 1);
 
-       
         PlayerPrefs.SetInt("CarIndexValue", currentCarIndex);
         PlayerPrefs.Save();
 
-        SceneManager.LoadScene("Practice");
+        EnsureLoadingScreen();
+        LoadingScreen.Instance.LoadScene("Practice");
     }
 }
