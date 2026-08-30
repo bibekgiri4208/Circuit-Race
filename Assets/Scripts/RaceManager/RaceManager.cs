@@ -4,6 +4,15 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
+[System.Serializable]
+public class CountdownCameraAngle
+{
+    public string label;
+    public Vector3 positionOffset;
+    public Vector3 lookAtOffset;
+    public float fov;
+}
+
 public class RaceManager : MonoBehaviour
 {
     public static RaceManager Instance;
@@ -13,21 +22,56 @@ public class RaceManager : MonoBehaviour
     public bool raceFinished = false;
     public int playerPosition = 0;
 
-    [Header("Countdown UI")]
-    public TextMeshProUGUI countdownText;
-    public CanvasGroup countdownCanvasGroup;
-
     [Header("Countdown Timing")]
     public float startDelay = 0.75f;
-    public float numberStayTime = 0.55f;
-    public float popAnimationTime = 0.25f;
-    public float fadeOutTime = 0.2f;
-    public float goStayTime = 0.7f;
+    public float numberStayTime = 0.5f;
+    public float numberAnimTime = 0.2f;
+    public float fadeOutTime = 0.15f;
+    public float goStayTime = 0.6f;
+    public float cameraTransitionTime = 0.6f;
 
-    [Header("Countdown Scale")]
-    public float startScale = 0.4f;
-    public float popScale = 1.35f;
-    public float normalScale = 1f;
+    [Header("Countdown Text (scene objects)")]
+    public GameObject countdownParent;
+    public TextMeshPro textThree;
+    public TextMeshPro textTwo;
+    public TextMeshPro textOne;
+    public TextMeshPro textGo;
+
+    [Header("Countdown Colors")]
+    public Color colorThree = new Color(1f, 0.15f, 0.15f, 1f);
+    public Color colorTwo = new Color(1f, 0.35f, 0.05f, 1f);
+    public Color colorOne = new Color(1f, 0.6f, 0f, 1f);
+    public Color colorGo = new Color(0f, 1f, 0.3f, 1f);
+
+    [Header("Camera Angles (relative to car)")]
+    public CountdownCameraAngle angleThree = new CountdownCameraAngle
+    {
+        label = "Rear Left Quarter",
+        positionOffset = new Vector3(-4f, 2f, -6f),
+        lookAtOffset = new Vector3(0f, 1f, 0f),
+        fov = 45f
+    };
+    public CountdownCameraAngle angleTwo = new CountdownCameraAngle
+    {
+        label = "Front Low",
+        positionOffset = new Vector3(0f, 1f, 6f),
+        lookAtOffset = new Vector3(0f, 0.8f, 0f),
+        fov = 40f
+    };
+    public CountdownCameraAngle angleOne = new CountdownCameraAngle
+    {
+        label = "Side Close-Up",
+        positionOffset = new Vector3(5f, 2.5f, 0f),
+        lookAtOffset = new Vector3(0f, 1f, 0f),
+        fov = 35f
+    };
+    public CountdownCameraAngle angleGo = new CountdownCameraAngle
+    {
+        label = "Rear Chase",
+        positionOffset = new Vector3(0f, 2.5f, -6f),
+        lookAtOffset = new Vector3(0f, 1f, 2f),
+        fov = 50f
+    };
 
     [Header("Finish Sequence")]
     public float finishTextStayTime = 2f;
@@ -39,12 +83,16 @@ public class RaceManager : MonoBehaviour
 
     private CarSpawner carSpawner;
     private ChaseCamera chaseCam;
+    private Camera mainCam;
     private TextMeshProUGUI finishText;
     private CanvasGroup finishTextCanvasGroup;
     private TextMeshProUGUI positionText;
     private CanvasGroup positionTextCanvasGroup;
     private GameObject fadeOverlay;
     private CanvasGroup fadeOverlayCanvasGroup;
+
+    private AnimationCurve punchCurve;
+    private Vector3[] originalScales = new Vector3[4];
 
     private void Awake()
     {
@@ -57,18 +105,28 @@ public class RaceManager : MonoBehaviour
         raceFinished = false;
 
         carSpawner = FindAnyObjectByType<CarSpawner>();
+        mainCam = Camera.main;
 
-        if (countdownText == null)
-            CreateCountdownUI();
-
-        if (countdownText != null)
+        if (mainCam != null)
         {
-            countdownText.gameObject.SetActive(true);
-            countdownText.text = "";
+            chaseCam = mainCam.GetComponent<ChaseCamera>();
+            if (chaseCam != null)
+                chaseCam.holdPosition = true;
         }
 
-        if (countdownCanvasGroup != null)
-            countdownCanvasGroup.alpha = 0f;
+        punchCurve = new AnimationCurve(
+            new Keyframe(0f, 0f, 0f, 2.5f),
+            new Keyframe(0.15f, 1.2f, 0f, 0f),
+            new Keyframe(0.3f, 0.95f, 0f, 0f),
+            new Keyframe(0.5f, 1.05f, 0f, 0f),
+            new Keyframe(0.7f, 0.98f, 0f, 0f),
+            new Keyframe(1f, 1f, 0f, 0f)
+        );
+        punchCurve.preWrapMode = WrapMode.ClampForever;
+        punchCurve.postWrapMode = WrapMode.ClampForever;
+
+        DisableCountdownObjects();
+        StoreOriginalScales();
 
         StartCoroutine(StartCountdown());
     }
@@ -80,156 +138,268 @@ public class RaceManager : MonoBehaviour
         StartCoroutine(FinishRaceSequence());
     }
 
-    void CreateCountdownUI()
+    private Transform GetCarTransform()
     {
-        Canvas canvas = FindAnyObjectByType<Canvas>();
-        if (canvas == null)
+        if (carSpawner != null && carSpawner.SpawnedCar != null)
+            return carSpawner.SpawnedCar.transform;
+        return null;
+    }
+
+    private void DisableCountdownObjects()
+    {
+        if (countdownParent != null)
+            countdownParent.SetActive(false);
+
+        if (textThree != null) textThree.gameObject.SetActive(false);
+        if (textTwo != null) textTwo.gameObject.SetActive(false);
+        if (textOne != null) textOne.gameObject.SetActive(false);
+        if (textGo != null) textGo.gameObject.SetActive(false);
+    }
+
+    private void StoreOriginalScales()
+    {
+        if (textThree != null) originalScales[0] = textThree.transform.localScale;
+        if (textTwo != null) originalScales[1] = textTwo.transform.localScale;
+        if (textOne != null) originalScales[2] = textOne.transform.localScale;
+        if (textGo != null) originalScales[3] = textGo.transform.localScale;
+    }
+
+    private TextMeshPro GetTMPForValue(string value)
+    {
+        switch (value)
         {
-            GameObject canvasGO = new GameObject("CountdownCanvas");
-            canvas = canvasGO.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 50;
-            canvasGO.AddComponent<CanvasScaler>();
-            canvasGO.AddComponent<GraphicRaycaster>();
+            case "3": return textThree;
+            case "2": return textTwo;
+            case "1": return textOne;
+            default: return null;
+        }
+    }
+
+    private IEnumerator TransitionCamera(Transform carTransform, CountdownCameraAngle angle)
+    {
+        if (mainCam == null || carTransform == null) yield break;
+
+        Vector3 carPos = carTransform.position;
+        Quaternion carRot = carTransform.rotation;
+
+        Vector3 targetPos = carPos + carRot * angle.positionOffset;
+        Vector3 lookTarget = carPos + carRot * angle.lookAtOffset;
+        Quaternion targetRot = Quaternion.LookRotation(lookTarget - targetPos, Vector3.up);
+        float targetFov = angle.fov;
+
+        Vector3 startPos = mainCam.transform.position;
+        Quaternion startRot = mainCam.transform.rotation;
+        float startFov = mainCam.fieldOfView;
+
+        float timer = 0f;
+        while (timer < cameraTransitionTime)
+        {
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / cameraTransitionTime);
+            float smooth = t * t * (3f - 2f * t);
+
+            if (mainCam == null) yield break;
+            mainCam.transform.position = Vector3.Lerp(startPos, targetPos, smooth);
+            mainCam.transform.rotation = Quaternion.Slerp(startRot, targetRot, smooth);
+            mainCam.fieldOfView = Mathf.Lerp(startFov, targetFov, smooth);
+
+            yield return null;
         }
 
-        GameObject textGO = new GameObject("CountdownText");
-        textGO.transform.SetParent(canvas.transform, false);
-        RectTransform rect = textGO.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(400, 200);
-        countdownText = textGO.AddComponent<TextMeshProUGUI>();
-        countdownText.fontSize = 180;
-        countdownText.fontStyle = FontStyles.Bold;
-        countdownText.color = new Color(1f, 0.984f, 0f, 1f);
-        countdownText.alignment = TextAlignmentOptions.Center;
-        countdownText.text = "";
-
-        countdownCanvasGroup = textGO.AddComponent<CanvasGroup>();
-        countdownCanvasGroup.alpha = 0f;
+        if (mainCam != null)
+        {
+            mainCam.transform.position = targetPos;
+            mainCam.transform.rotation = targetRot;
+            mainCam.fieldOfView = targetFov;
+        }
     }
 
     private IEnumerator StartCountdown()
     {
         yield return new WaitForSeconds(startDelay);
 
-        yield return ShowCountdownText("3");
-        yield return ShowCountdownText("2");
-        yield return ShowCountdownText("1");
+        Transform car = GetCarTransform();
+        if (car == null)
+        {
+            Debug.LogWarning("RaceManager: No car found for countdown.");
+            yield break;
+        }
 
-        yield return ShowGoText();
+        if (countdownParent != null)
+            countdownParent.SetActive(true);
+
+        yield return ShowCountdownNumber("3", colorThree, angleThree, car);
+        yield return ShowCountdownNumber("2", colorTwo, angleTwo, car);
+        yield return ShowCountdownNumber("1", colorOne, angleOne, car);
+
+        yield return ShowGoText(angleGo, car);
 
         raceStarted = true;
 
+        if (chaseCam != null)
+            chaseCam.holdPosition = false;
+
         yield return new WaitForSeconds(goStayTime);
+        yield return FadeOutCountdown3D();
 
-        yield return FadeOutCountdown();
-
-        if (countdownText != null)
-            countdownText.gameObject.SetActive(false);
+        if (countdownParent != null)
+            countdownParent.SetActive(false);
     }
 
-    private IEnumerator ShowCountdownText(string value)
+    private IEnumerator ShowCountdownNumber(string value, Color color, CountdownCameraAngle angle, Transform car)
     {
-        if (countdownText == null) yield break;
-        countdownText.text = value;
-        countdownText.transform.localScale = Vector3.one * startScale;
+        TextMeshPro tmp = GetTMPForValue(value);
+        if (tmp == null || mainCam == null) yield break;
 
-        if (countdownCanvasGroup != null)
-            countdownCanvasGroup.alpha = 1f;
+        StartCoroutine(TransitionCamera(car, angle));
+
+        int index = value == "3" ? 0 : value == "2" ? 1 : 2;
+        Vector3 origScale = originalScales[index];
+
+        tmp.gameObject.SetActive(true);
+        tmp.color = color;
+        tmp.transform.localScale = origScale * 3f;
 
         float timer = 0f;
-
-        while (timer < popAnimationTime)
+        while (timer < numberAnimTime)
         {
             timer += Time.deltaTime;
-            float t = timer / popAnimationTime;
+            float t = Mathf.Clamp01(timer / numberAnimTime);
+            float curveValue = punchCurve.Evaluate(t);
+            float scale = Mathf.Lerp(3f, 1f, curveValue);
 
-            float scale = Mathf.Lerp(startScale, popScale, t);
-            if (countdownText == null) yield break;
-            countdownText.transform.localScale = Vector3.one * scale;
+            if (tmp == null) yield break;
+            tmp.transform.localScale = origScale * scale;
+
+            if (tmp != null)
+            {
+                float alpha = Mathf.Lerp(0f, 1f, Mathf.Clamp01(t * 3f));
+                tmp.color = new Color(color.r, color.g, color.b, alpha);
+            }
 
             yield return null;
         }
 
-        timer = 0f;
-
-        while (timer < popAnimationTime)
-        {
-            timer += Time.deltaTime;
-            float t = timer / popAnimationTime;
-
-            float scale = Mathf.Lerp(popScale, normalScale, t);
-            if (countdownText == null) yield break;
-            countdownText.transform.localScale = Vector3.one * scale;
-
-            yield return null;
-        }
+        if (tmp != null)
+            tmp.transform.localScale = origScale;
 
         yield return new WaitForSeconds(numberStayTime);
 
-        yield return FadeOutCountdown();
+        yield return FadeOutSingle(tmp, color);
+
+        if (tmp != null)
+            tmp.gameObject.SetActive(false);
     }
 
-    private IEnumerator ShowGoText()
+    private IEnumerator ShowGoText(CountdownCameraAngle angle, Transform car)
     {
-        if (countdownText == null) yield break;
-        countdownText.text = "GO!";
-        countdownText.transform.localScale = Vector3.one * startScale;
+        if (textGo == null || mainCam == null) yield break;
 
-        if (countdownCanvasGroup != null)
-            countdownCanvasGroup.alpha = 1f;
+        StartCoroutine(TransitionCamera(car, angle));
+
+        Vector3 origScale = originalScales[3];
+
+        textGo.gameObject.SetActive(true);
+        textGo.color = colorGo;
+        textGo.transform.localScale = origScale * 3.5f;
 
         float timer = 0f;
-
-        while (timer < popAnimationTime)
+        float animDuration = numberAnimTime * 1.5f;
+        while (timer < animDuration)
         {
             timer += Time.deltaTime;
-            float t = timer / popAnimationTime;
+            float t = Mathf.Clamp01(timer / animDuration);
+            float curveValue = punchCurve.Evaluate(t);
+            float scale = Mathf.Lerp(3.5f, 1f, curveValue);
 
-            float scale = Mathf.Lerp(startScale, 1.6f, t);
-            if (countdownText == null) yield break;
-            countdownText.transform.localScale = Vector3.one * scale;
+            if (textGo == null) yield break;
+            textGo.transform.localScale = origScale * scale;
+
+            if (textGo != null)
+            {
+                float alpha = Mathf.Lerp(0f, 1f, Mathf.Clamp01(t * 4f));
+                textGo.color = new Color(colorGo.r, colorGo.g, colorGo.b, alpha);
+            }
 
             yield return null;
         }
 
-        timer = 0f;
+        if (textGo != null)
+            textGo.transform.localScale = origScale;
 
-        while (timer < popAnimationTime)
+        float pulseTimer = 0f;
+        while (pulseTimer < 0.25f)
+        {
+            pulseTimer += Time.deltaTime;
+            float pulse = 1f + Mathf.Sin(pulseTimer * Mathf.PI * 5f) * 0.06f;
+            if (textGo == null) yield break;
+            textGo.transform.localScale = origScale * pulse;
+            yield return null;
+        }
+
+        if (textGo != null)
+            textGo.transform.localScale = origScale;
+    }
+
+    private IEnumerator FadeOutSingle(TextMeshPro tmp, Color baseColor)
+    {
+        if (tmp == null) yield break;
+
+        float timer = 0f;
+        while (timer < fadeOutTime)
         {
             timer += Time.deltaTime;
-            float t = timer / popAnimationTime;
+            float t = timer / fadeOutTime;
 
-            float scale = Mathf.Lerp(1.6f, 1.15f, t);
-            if (countdownText == null) yield break;
-            countdownText.transform.localScale = Vector3.one * scale;
+            if (tmp == null) yield break;
+            float alpha = Mathf.Lerp(1f, 0f, t);
+            tmp.color = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
 
             yield return null;
         }
+
+        if (tmp != null)
+            tmp.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
     }
 
-    private IEnumerator FadeOutCountdown()
+    private IEnumerator FadeOutCountdown3D()
     {
-        if (countdownCanvasGroup == null)
-            yield break;
-
         float timer = 0f;
-        float startAlpha = countdownCanvasGroup.alpha;
+        TextMeshPro[] temps = { textThree, textTwo, textOne, textGo };
+        Color[] colors = { colorThree, colorTwo, colorOne, colorGo };
+        float[] startAlphas = new float[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (temps[i] != null)
+                startAlphas[i] = temps[i].color.a;
+        }
 
         while (timer < fadeOutTime)
         {
             timer += Time.deltaTime;
             float t = timer / fadeOutTime;
 
-            countdownCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, t);
+            for (int i = 0; i < 4; i++)
+            {
+                if (temps[i] != null && temps[i].gameObject.activeSelf)
+                {
+                    float alpha = Mathf.Lerp(startAlphas[i], 0f, t);
+                    temps[i].color = new Color(colors[i].r, colors[i].g, colors[i].b, alpha);
+                }
+            }
 
             yield return null;
         }
 
-        countdownCanvasGroup.alpha = 0f;
+        for (int i = 0; i < 4; i++)
+        {
+            if (temps[i] != null)
+            {
+                temps[i].color = new Color(colors[i].r, colors[i].g, colors[i].b, 0f);
+                temps[i].gameObject.SetActive(false);
+            }
+        }
     }
 
     private IEnumerator FinishRaceSequence()
@@ -253,9 +423,9 @@ public class RaceManager : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        Camera mainCam = Camera.main;
-        if (mainCam != null)
-            chaseCam = mainCam.GetComponent<ChaseCamera>();
+        Camera cam = Camera.main;
+        if (cam != null)
+            chaseCam = cam.GetComponent<ChaseCamera>();
         if (chaseCam != null)
             chaseCam.enabled = false;
 

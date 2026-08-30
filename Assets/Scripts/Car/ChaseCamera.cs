@@ -35,6 +35,8 @@ public class ChaseCamera : MonoBehaviour
     public float cameraTiltAmount = 6f;
     public float tiltSmoothSpeed = 5f;
 
+    [HideInInspector] public bool holdPosition = false;
+
     private float currentYaw;
     private float currentDistance;
     private float currentTilt;
@@ -76,6 +78,9 @@ public class ChaseCamera : MonoBehaviour
     void LateUpdate()
     {
         if (target == null || targetRb == null)
+            return;
+
+        if (holdPosition)
             return;
 
         Vector3 velocity = targetRb.linearVelocity;
