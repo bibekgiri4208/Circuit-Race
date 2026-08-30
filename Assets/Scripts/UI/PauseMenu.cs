@@ -101,20 +101,14 @@ public class PauseMenu : MonoBehaviour
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        if (LoadingScreen.Instance != null)
-            LoadingScreen.Instance.LoadScene(SceneManager.GetActiveScene().name);
-        else
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        LoadingScreen.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void Quit()
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        if (LoadingScreen.Instance != null)
-            LoadingScreen.Instance.LoadScene("Garage");
-        else
-            SceneManager.LoadScene("Garage");
+        LoadingScreen.LoadScene("Garage");
     }
 
     GameObject CreateButton(Transform parent, string name, string label,
