@@ -133,6 +133,7 @@ public class RaceManager : MonoBehaviour
 
     private IEnumerator ShowCountdownText(string value)
     {
+        if (countdownText == null) yield break;
         countdownText.text = value;
         countdownText.transform.localScale = Vector3.one * startScale;
 
@@ -147,6 +148,7 @@ public class RaceManager : MonoBehaviour
             float t = timer / popAnimationTime;
 
             float scale = Mathf.Lerp(startScale, popScale, t);
+            if (countdownText == null) yield break;
             countdownText.transform.localScale = Vector3.one * scale;
 
             yield return null;
@@ -160,6 +162,7 @@ public class RaceManager : MonoBehaviour
             float t = timer / popAnimationTime;
 
             float scale = Mathf.Lerp(popScale, normalScale, t);
+            if (countdownText == null) yield break;
             countdownText.transform.localScale = Vector3.one * scale;
 
             yield return null;
@@ -172,6 +175,7 @@ public class RaceManager : MonoBehaviour
 
     private IEnumerator ShowGoText()
     {
+        if (countdownText == null) yield break;
         countdownText.text = "GO!";
         countdownText.transform.localScale = Vector3.one * startScale;
 
@@ -186,6 +190,7 @@ public class RaceManager : MonoBehaviour
             float t = timer / popAnimationTime;
 
             float scale = Mathf.Lerp(startScale, 1.6f, t);
+            if (countdownText == null) yield break;
             countdownText.transform.localScale = Vector3.one * scale;
 
             yield return null;
@@ -199,6 +204,7 @@ public class RaceManager : MonoBehaviour
             float t = timer / popAnimationTime;
 
             float scale = Mathf.Lerp(1.6f, 1.15f, t);
+            if (countdownText == null) yield break;
             countdownText.transform.localScale = Vector3.one * scale;
 
             yield return null;
@@ -283,10 +289,7 @@ public class RaceManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         yield return StartCoroutine(FadeToBlack());
 
-        if (LoadingScreen.Instance != null)
-            LoadingScreen.Instance.LoadScene("Garage");
-        else
-            SceneManager.LoadScene("Garage");
+        LoadingScreen.LoadScene("Garage");
     }
 
     private void CreateFinishUI()
