@@ -6,9 +6,9 @@ public class ChaseCamera : MonoBehaviour
     public Rigidbody targetRb;
 
     [Header("Follow")]
-    public float baseDistance = 4.5f;
-    public float maxDistance = 6.5f;
-    public float height = 1.8f;
+    public float baseDistance = 6f;
+    public float maxDistance = 9f;
+    public float height = 2.2f;
 
     [Header("Speed Camera")]
     public float speedForMaxDistance = 80f;
@@ -35,14 +35,25 @@ public class ChaseCamera : MonoBehaviour
     public float cameraTiltAmount = 6f;
     public float tiltSmoothSpeed = 5f;
 
+    [Header("Mouse Orbit")]
+    public float mouseSensitivity = 3f;
+    public float maxPitchUp = 50f;
+    public float maxPitchDown = -15f;
+    public float resetSpeed = 5f;
+
     [HideInInspector] public bool holdPosition = false;
 
     private float currentYaw;
     private float currentDistance;
     private float currentTilt;
+    private float mouseYaw;
+    private float mousePitch;
 
     void Start()
     {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         if (target != null)
         {
             currentYaw = target.eulerAngles.y;
@@ -72,6 +83,29 @@ public class ChaseCamera : MonoBehaviour
                 lookTarget - transform.position,
                 Vector3.up
             );
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt))
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+
+        if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
     }
 
@@ -112,6 +146,23 @@ public class ChaseCamera : MonoBehaviour
             rotationSmoothSpeed * Time.deltaTime
         );
 
+        // ================= MOUSE ORBIT =================
+        bool freeCam = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
+        if (freeCam)
+        {
+            float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+            float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+
+            mouseYaw += mouseX;
+            mousePitch -= mouseY;
+            mousePitch = Mathf.Clamp(mousePitch, maxPitchDown, maxPitchUp);
+        }
+        else
+        {
+            mouseYaw = Mathf.Lerp(mouseYaw, 0f, resetSpeed * Time.deltaTime);
+            mousePitch = Mathf.Lerp(mousePitch, 0f, resetSpeed * Time.deltaTime);
+        }
 
         Vector3 GetSpeedShake(float speedKmh)
         {
@@ -154,13 +205,19 @@ public class ChaseCamera : MonoBehaviour
         );
 
         // ================= CAMERA POSITION =================
+        float yaw = currentYaw + mouseYaw;
+        float pitch = mousePitch * Mathf.Deg2Rad;
+
         Quaternion rotation =
-            Quaternion.Euler(0f, currentYaw, 0f);
+            Quaternion.Euler(0f, yaw, 0f);
+
+        float horizontalDist = currentDistance * Mathf.Cos(pitch);
+        float verticalDist = currentDistance * Mathf.Sin(pitch);
 
         Vector3 desiredPosition =
-    target.position
-    + Vector3.up * height
-    - rotation * Vector3.forward * currentDistance;
+            target.position
+            + rotation * Vector3.forward * (-horizontalDist)
+            + Vector3.up * (height + verticalDist);
 
         desiredPosition += GetSpeedShake(speedKmh);
 
@@ -171,10 +228,7 @@ public class ChaseCamera : MonoBehaviour
         );
 
         // ================= LOOK TARGET =================
-        Vector3 lookTarget =
-            target.position
-            + target.forward * lookForwardOffset
-            + Vector3.up * lookHeight;
+        Vector3 lookTarget = target.position + Vector3.up * lookHeight;
 
         Quaternion lookRotation =
             Quaternion.LookRotation(
