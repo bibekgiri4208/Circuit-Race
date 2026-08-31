@@ -935,9 +935,9 @@ MonoBehaviour:
   downforce: 120
   angularDragNormal: 1.8
   carVisual: {fileID: 4589360318641711935}
-  bodyRollAmount: 4
-  bodyPitchAmount: 2
-  bodyRollSpeed: 8
+  bodyRollAmount: 0
+  bodyPitchAmount: 0
+  bodyRollSpeed: 0
 --- !u!1 &1096621844
 GameObject:
   m_ObjectHideFlags: 0
