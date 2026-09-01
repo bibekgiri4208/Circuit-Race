@@ -40,6 +40,8 @@ public class ChaseCamera : MonoBehaviour
     public float maxPitchUp = 50f;
     public float maxPitchDown = -15f;
     public float resetSpeed = 5f;
+    public float freeCamDistanceMultiplier = 1.8f;
+    public float freeCamHeightOffset = 1.5f;
 
     [HideInInspector] public bool holdPosition = false;
 
@@ -51,9 +53,6 @@ public class ChaseCamera : MonoBehaviour
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
         if (target != null)
         {
             currentYaw = target.eulerAngles.y;
@@ -83,29 +82,6 @@ public class ChaseCamera : MonoBehaviour
                 lookTarget - transform.position,
                 Vector3.up
             );
-        }
-    }
-
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt))
-        {
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }
-
-        if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
     }
 
@@ -198,6 +174,11 @@ public class ChaseCamera : MonoBehaviour
             speed01
         );
 
+        if (freeCam)
+        {
+            targetDistance *= freeCamDistanceMultiplier;
+        }
+
         currentDistance = Mathf.Lerp(
             currentDistance,
             targetDistance,
@@ -214,10 +195,16 @@ public class ChaseCamera : MonoBehaviour
         float horizontalDist = currentDistance * Mathf.Cos(pitch);
         float verticalDist = currentDistance * Mathf.Sin(pitch);
 
+        float camHeight = height + verticalDist;
+        if (freeCam)
+        {
+            camHeight += freeCamHeightOffset;
+        }
+
         Vector3 desiredPosition =
             target.position
             + rotation * Vector3.forward * (-horizontalDist)
-            + Vector3.up * (height + verticalDist);
+            + Vector3.up * camHeight;
 
         desiredPosition += GetSpeedShake(speedKmh);
 
