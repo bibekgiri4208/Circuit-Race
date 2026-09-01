@@ -1,247 +1,119 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class ChaseCamera : MonoBehaviour
 {
+    [Header("Target")]
     public Transform target;
     public Rigidbody targetRb;
 
-    [Header("Follow")]
-    public float baseDistance = 6f;
-    public float maxDistance = 9f;
-    public float height = 2.2f;
+    [Header("Camera Position")]
+    public Vector3 offset = new Vector3(0f, 3f, -7f);
+    public float followSmoothness = 12f;
+    public float lookHeight = 1.5f;
 
-    [Header("Speed Camera")]
-    public float speedForMaxDistance = 80f;
-    public float distanceSmoothSpeed = 4f;
+    [Header("Mouse Look")]
+    public float mouseSensitivity = 0.15f;
+    public float minPitch = -10f;
+    public float maxPitch = 45f;
 
-    [Header("Speed Shake")]
-    public float shakeStartSpeed = 70f;
-    public float maxShakeSpeed = 180f;
-    public float maxShakeAmount = 0.04f;
-    public float shakeFrequency = 22f;
+    [Header("Boost Camera Effect")]
+    public float boostPullBackDistance = 2.5f;
+    public float boostHeightIncrease = 0.3f;
+    public float boostCameraSmoothness = 8f;
 
-    [Header("Position Smooth")]
-    public float positionSmoothSpeed = 8f;
-
-    [Header("Rotation")]
-    public float rotationSmoothSpeed = 6f;
-    public float velocityFollowStrength = 0.75f;
-
-    [Header("Look")]
-    public float lookHeight = 1.2f;
-    public float lookForwardOffset = 2f;
-
-    [Header("Dynamic Effects")]
-    public float cameraTiltAmount = 6f;
-    public float tiltSmoothSpeed = 5f;
-
-    [Header("Mouse Orbit")]
-    public float mouseSensitivity = 3f;
-    public float maxPitchUp = 50f;
-    public float maxPitchDown = -15f;
-    public float resetSpeed = 5f;
-    public float freeCamDistanceMultiplier = 1.8f;
-    public float freeCamHeightOffset = 1.5f;
+    [Header("Boost Shake")]
+    public float boostShakeStrength = 0.08f;
+    public float boostShakeSpeed = 35f;
 
     [HideInInspector] public bool holdPosition = false;
 
-    private float currentYaw;
-    private float currentDistance;
-    private float currentTilt;
-    private float mouseYaw;
-    private float mousePitch;
+    private float yaw;
+    private float pitch = 15f;
 
-    void Start()
+    private Vector3 currentOffset;
+    private float shakeTimer;
+
+    private void Start()
     {
+        currentOffset = offset;
+
         if (target != null)
         {
-            currentYaw = target.eulerAngles.y;
-        }
-
-        currentDistance = baseDistance;
-        currentTilt = 0f;
-
-        //  FORCE CLEAN INITIAL CAMERA STATE (fixes startup tilt)
-        if (target != null && targetRb != null)
-        {
-            Quaternion rotation = Quaternion.Euler(0f, currentYaw, 0f);
-
-            Vector3 startPos =
-                target.position +
-                Vector3.up * height -
-                rotation * Vector3.forward * baseDistance;
-
-            transform.position = startPos;
-
-            Vector3 lookTarget =
-                target.position +
-                target.forward * lookForwardOffset +
-                Vector3.up * lookHeight;
-
-            transform.rotation = Quaternion.LookRotation(
-                lookTarget - transform.position,
-                Vector3.up
-            );
+            yaw = target.eulerAngles.y;
         }
     }
 
-    void LateUpdate()
+    private void LateUpdate()
     {
-        if (target == null || targetRb == null)
+        if (target == null || holdPosition)
             return;
 
-        if (holdPosition)
-            return;
+        HandleMouseLook();
+        FollowTarget();
+    }
 
-        Vector3 velocity = targetRb.linearVelocity;
-        velocity.y = 0f;
+    private void HandleMouseLook()
+    {
+        if (Mouse.current == null) return;
 
-        float speed = velocity.magnitude;
-        float speedKmh = speed * 3.6f;
+        Vector2 lookInput = Mouse.current.delta.ReadValue() * mouseSensitivity;
 
-        // ================= CAMERA DIRECTION =================
-        Vector3 forward = target.forward;
+        yaw += lookInput.x;
+        pitch -= lookInput.y;
 
-        if (speed > 2f)
+        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+    }
+
+    private void FollowTarget()
+    {
+        bool isBoosting = Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
+
+        Vector3 targetOffset = offset;
+
+        if (isBoosting)
         {
-            Vector3 velocityDir = velocity.normalized;
-
-            forward = Vector3.Slerp(
-                target.forward,
-                velocityDir,
-                velocityFollowStrength
+            targetOffset = new Vector3(
+                offset.x,
+                offset.y + boostHeightIncrease,
+                offset.z - boostPullBackDistance
             );
         }
 
-        float targetYaw =
-            Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
-
-        currentYaw = Mathf.LerpAngle(
-            currentYaw,
-            targetYaw,
-            rotationSmoothSpeed * Time.deltaTime
+        currentOffset = Vector3.Lerp(
+            currentOffset,
+            targetOffset,
+            boostCameraSmoothness * Time.deltaTime
         );
 
-        // ================= MOUSE ORBIT =================
-        bool freeCam = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        Quaternion cameraRotation = Quaternion.Euler(pitch, yaw, 0f);
 
-        if (freeCam)
+        Vector3 desiredPosition = target.position + cameraRotation * currentOffset;
+
+        if (isBoosting)
         {
-            float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-            float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
-
-            mouseYaw += mouseX;
-            mousePitch -= mouseY;
-            mousePitch = Mathf.Clamp(mousePitch, maxPitchDown, maxPitchUp);
+            desiredPosition += GetBoostShake(cameraRotation);
         }
-        else
-        {
-            mouseYaw = Mathf.Lerp(mouseYaw, 0f, resetSpeed * Time.deltaTime);
-            mousePitch = Mathf.Lerp(mousePitch, 0f, resetSpeed * Time.deltaTime);
-        }
-
-        Vector3 GetSpeedShake(float speedKmh)
-        {
-            if (speedKmh < shakeStartSpeed)
-                return Vector3.zero;
-
-            float shake01 = Mathf.InverseLerp(
-                shakeStartSpeed,
-                maxShakeSpeed,
-                speedKmh
-            );
-
-            float amount = maxShakeAmount * shake01;
-
-            float x =
-                (Mathf.PerlinNoise(Time.time * shakeFrequency, 0f) - 0.5f)
-                * amount;
-
-            float y =
-                (Mathf.PerlinNoise(0f, Time.time * shakeFrequency) - 0.5f)
-                * amount;
-
-            return transform.right * x + transform.up * y;
-        }
-
-        // ================= SPEED BASED DISTANCE =================
-        float speed01 = Mathf.Clamp01(speed / speedForMaxDistance);
-        speed01 = Mathf.SmoothStep(0f, 1f, speed01);
-
-        float targetDistance = Mathf.Lerp(
-            baseDistance,
-            maxDistance,
-            speed01
-        );
-
-        if (freeCam)
-        {
-            targetDistance *= freeCamDistanceMultiplier;
-        }
-
-        currentDistance = Mathf.Lerp(
-            currentDistance,
-            targetDistance,
-            distanceSmoothSpeed * Time.deltaTime
-        );
-
-        // ================= CAMERA POSITION =================
-        float yaw = currentYaw + mouseYaw;
-        float pitch = mousePitch * Mathf.Deg2Rad;
-
-        Quaternion rotation =
-            Quaternion.Euler(0f, yaw, 0f);
-
-        float horizontalDist = currentDistance * Mathf.Cos(pitch);
-        float verticalDist = currentDistance * Mathf.Sin(pitch);
-
-        float camHeight = height + verticalDist;
-        if (freeCam)
-        {
-            camHeight += freeCamHeightOffset;
-        }
-
-        Vector3 desiredPosition =
-            target.position
-            + rotation * Vector3.forward * (-horizontalDist)
-            + Vector3.up * camHeight;
-
-        desiredPosition += GetSpeedShake(speedKmh);
 
         transform.position = Vector3.Lerp(
             transform.position,
             desiredPosition,
-            positionSmoothSpeed * Time.deltaTime
+            followSmoothness * Time.deltaTime
         );
 
-        // ================= LOOK TARGET =================
-        Vector3 lookTarget = target.position + Vector3.up * lookHeight;
+        Vector3 lookPoint = target.position + Vector3.up * lookHeight;
+        transform.rotation = Quaternion.LookRotation(lookPoint - transform.position);
+    }
 
-        Quaternion lookRotation =
-            Quaternion.LookRotation(
-                lookTarget - transform.position,
-                Vector3.up
-            );
+    private Vector3 GetBoostShake(Quaternion cameraRotation)
+    {
+        shakeTimer += Time.deltaTime * boostShakeSpeed;
 
-        // ================= SAFE TILT =================
-        float steerInfluence = 0f;
+        float shakeX = Mathf.Sin(shakeTimer) * boostShakeStrength;
+        float shakeY = Mathf.Cos(shakeTimer * 1.4f) * boostShakeStrength;
 
-        if (speed > 1f)
-        {
-            steerInfluence = Vector3.Dot(target.right, velocity.normalized);
-        }
+        Vector3 localShake = new Vector3(shakeX, shakeY, 0f);
 
-        float targetTilt =
-            (speed > 1f) ? -steerInfluence * cameraTiltAmount : 0f;
-
-        currentTilt = Mathf.Lerp(
-            currentTilt,
-            targetTilt,
-            tiltSmoothSpeed * Time.deltaTime
-        );
-
-        transform.rotation =
-            lookRotation *
-            Quaternion.Euler(0f, 0f, currentTilt);
+        return cameraRotation * localShake;
     }
 }
