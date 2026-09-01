@@ -86,6 +86,8 @@ public class PauseMenu : MonoBehaviour
         AudioListener.pause = true;
         pausePanel.SetActive(true);
         pauseButtonObj.SetActive(false);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void Resume()
@@ -95,12 +97,16 @@ public class PauseMenu : MonoBehaviour
         AudioListener.pause = false;
         pausePanel.SetActive(false);
         pauseButtonObj.SetActive(true);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     public void Restart()
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         LoadingScreen.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -108,6 +114,8 @@ public class PauseMenu : MonoBehaviour
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         LoadingScreen.LoadScene("Garage");
     }
 
