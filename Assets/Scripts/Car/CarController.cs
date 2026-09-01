@@ -71,9 +71,13 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
-        UpdateWheelMeshes();
         UpdateBodyVisual();
         HandleBrakeLights();
+    }
+
+    void LateUpdate()
+    {
+        UpdateWheelMeshes();
     }
 
     void FixedUpdate()
