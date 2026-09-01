@@ -51,9 +51,6 @@ public class ChaseCamera : MonoBehaviour
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
         if (target != null)
         {
             currentYaw = target.eulerAngles.y;
@@ -83,29 +80,6 @@ public class ChaseCamera : MonoBehaviour
                 lookTarget - transform.position,
                 Vector3.up
             );
-        }
-    }
-
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt))
-        {
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }
-
-        if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
     }
 
