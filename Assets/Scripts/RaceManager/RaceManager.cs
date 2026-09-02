@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,6 +12,15 @@ public class CountdownCameraAngle
     public Vector3 positionOffset;
     public Vector3 lookAtOffset;
     public float fov;
+}
+
+[System.Serializable]
+public class CameraKeyframe
+{
+    public Vector3 positionOffset;
+    public Vector3 lookAtOffset;
+    public float fov;
+    public float time;
 }
 
 public class RaceManager : MonoBehaviour
@@ -73,13 +83,58 @@ public class RaceManager : MonoBehaviour
         fov = 50f
     };
 
-    [Header("Finish Sequence")]
-    public float finishTextStayTime = 2f;
-    public float orbitDuration = 3f;
-    public float orbitHeight = 3f;
-    public float orbitDistance = 8f;
-    public float orbitSpeed = 100f;
+    [Header("Finish Cinematic")]
+    public float finishCinematicDuration = 6f;
+    public float finishSlowMotionScale = 0.4f;
+    public float finishSlowMotionEnd = 3.5f;
+    public float resultHoldTime = 2.5f;
     public float fadeToBlackDuration = 0.8f;
+
+    public List<CameraKeyframe> finishKeyframes = new List<CameraKeyframe>
+    {
+        new CameraKeyframe
+        {
+            positionOffset = new Vector3(0f, 2.5f, -6f),
+            lookAtOffset = new Vector3(0f, 1f, 2f),
+            fov = 50f,
+            time = 0f
+        },
+        new CameraKeyframe
+        {
+            positionOffset = new Vector3(6f, 1.5f, 1f),
+            lookAtOffset = new Vector3(0f, 0.8f, 2f),
+            fov = 40f,
+            time = 1.2f
+        },
+        new CameraKeyframe
+        {
+            positionOffset = new Vector3(4f, 2f, 5f),
+            lookAtOffset = new Vector3(0f, 0.8f, 0f),
+            fov = 38f,
+            time = 2.5f
+        },
+        new CameraKeyframe
+        {
+            positionOffset = new Vector3(-3f, 3.5f, 4f),
+            lookAtOffset = new Vector3(0f, 0.5f, 0f),
+            fov = 42f,
+            time = 3.5f
+        },
+        new CameraKeyframe
+        {
+            positionOffset = new Vector3(-5f, 2f, -3f),
+            lookAtOffset = new Vector3(0f, 1f, 0f),
+            fov = 40f,
+            time = 4.5f
+        },
+        new CameraKeyframe
+        {
+            positionOffset = new Vector3(0f, 3f, -7f),
+            lookAtOffset = new Vector3(0f, 1f, 0f),
+            fov = 45f,
+            time = 6f
+        }
+    };
 
     private CarSpawner carSpawner;
     private ChaseCamera chaseCam;
@@ -97,6 +152,15 @@ public class RaceManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Time.timeScale = 1f;
+            Instance = null;
+        }
     }
 
     private void Start()
@@ -413,15 +477,7 @@ public class RaceManager : MonoBehaviour
         }
 
         CarController carController = playerCar.GetComponent<CarController>();
-        if (carController != null)
-            carController.enabled = false;
-
         Rigidbody rb = playerCar.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
 
         Camera cam = Camera.main;
         if (cam != null)
@@ -430,36 +486,105 @@ public class RaceManager : MonoBehaviour
             chaseCam.enabled = false;
 
         CreateFinishUI();
-        ShowFinishText();
 
-        Vector3 carCenter = playerCar.transform.position + Vector3.up * 0.8f;
-        float startAngle = Mathf.Atan2(
-            mainCam.transform.position.x - carCenter.x,
-            mainCam.transform.position.z - carCenter.z
-        ) * Mathf.Rad2Deg;
+        if (carController != null)
+            carController.enabled = false;
 
         float elapsed = 0f;
-        while (elapsed < orbitDuration)
+        while (elapsed < finishSlowMotionEnd)
         {
-            elapsed += Time.deltaTime;
-            float t = elapsed / orbitDuration;
-            float angle = startAngle + t * orbitSpeed;
-
-            Vector3 offset = new Vector3(
-                Mathf.Sin(angle * Mathf.Deg2Rad) * orbitDistance,
-                orbitHeight,
-                Mathf.Cos(angle * Mathf.Deg2Rad) * orbitDistance
-            );
-
-            mainCam.transform.position = carCenter + offset;
-            mainCam.transform.LookAt(carCenter + Vector3.up * 0.5f);
+            elapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(elapsed / finishSlowMotionEnd);
+            Time.timeScale = Mathf.Lerp(finishSlowMotionScale, 1f, progress);
             yield return null;
         }
+        Time.timeScale = 1f;
 
-        yield return new WaitForSeconds(0.5f);
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        yield return StartCoroutine(SweepCamera(playerCar.transform, finishCinematicDuration));
+
+        yield return StartCoroutine(AnimateResultsUI());
+
+        yield return new WaitForSecondsRealtime(resultHoldTime);
+
         yield return StartCoroutine(FadeToBlack());
 
         LoadingScreen.LoadScene("Garage");
+    }
+
+    private IEnumerator SweepCamera(Transform carTransform, float duration)
+    {
+        if (mainCam == null || carTransform == null || finishKeyframes.Count < 2) yield break;
+
+        finishKeyframes.Sort((a, b) => a.time.CompareTo(b.time));
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            EvaluateKeyframes(carTransform, t, duration);
+
+            yield return null;
+        }
+
+        EvaluateKeyframes(carTransform, 1f, duration);
+    }
+
+    private void EvaluateKeyframes(Transform carTransform, float normalizedTime, float duration)
+    {
+        float targetTime = normalizedTime * duration;
+
+        int prevIndex = 0;
+        int nextIndex = 1;
+
+        for (int i = 0; i < finishKeyframes.Count - 1; i++)
+        {
+            if (targetTime >= finishKeyframes[i].time && targetTime <= finishKeyframes[i + 1].time)
+            {
+                prevIndex = i;
+                nextIndex = i + 1;
+                break;
+            }
+        }
+
+        if (targetTime >= finishKeyframes[finishKeyframes.Count - 1].time)
+        {
+            prevIndex = finishKeyframes.Count - 2;
+            nextIndex = finishKeyframes.Count - 1;
+        }
+
+        CameraKeyframe prev = finishKeyframes[prevIndex];
+        CameraKeyframe next = finishKeyframes[nextIndex];
+
+        float segmentDuration = next.time - prev.time;
+        float segmentT = segmentDuration > 0.001f
+            ? Mathf.Clamp01((targetTime - prev.time) / segmentDuration)
+            : 0f;
+
+        float smooth = segmentT * segmentT * (3f - 2f * segmentT);
+
+        Vector3 carPos = carTransform.position;
+        Quaternion carRot = carTransform.rotation;
+
+        Vector3 prevPos = carPos + carRot * prev.positionOffset;
+        Vector3 nextPos = carPos + carRot * next.positionOffset;
+        Vector3 prevLook = carPos + carRot * prev.lookAtOffset;
+        Vector3 nextLook = carPos + carRot * next.lookAtOffset;
+
+        Vector3 pos = Vector3.Lerp(prevPos, nextPos, smooth);
+        Vector3 lookTarget = Vector3.Lerp(prevLook, nextLook, smooth);
+        float fov = Mathf.Lerp(prev.fov, next.fov, smooth);
+
+        mainCam.transform.position = pos;
+        mainCam.transform.rotation = Quaternion.LookRotation(lookTarget - pos, Vector3.up);
+        mainCam.fieldOfView = fov;
     }
 
     private void CreateFinishUI()
@@ -551,21 +676,53 @@ public class RaceManager : MonoBehaviour
         fadeOverlayCanvasGroup.alpha = 0f;
     }
 
-    private void ShowFinishText()
+    private IEnumerator AnimateResultsUI()
     {
         if (finishText != null)
-            finishText.alpha = 1f;
-        if (finishTextCanvasGroup != null)
-            finishTextCanvasGroup.alpha = 1f;
-
-        if (positionText != null)
         {
+            finishText.alpha = 1f;
             string ordinal = GetOrdinal(playerPosition);
             positionText.text = "FINISHED " + ordinal + "!";
-            positionText.alpha = 1f;
         }
+        if (positionText != null)
+            positionText.alpha = 1f;
+
+        if (finishTextCanvasGroup != null)
+            finishTextCanvasGroup.alpha = 0f;
         if (positionTextCanvasGroup != null)
-            positionTextCanvasGroup.alpha = 1f;
+            positionTextCanvasGroup.alpha = 0f;
+
+        if (finishText != null)
+            finishText.transform.localScale = Vector3.one * 2.5f;
+        if (positionText != null)
+            positionText.transform.localScale = Vector3.one * 2f;
+
+        float animTime = 0.4f;
+        float timer = 0f;
+
+        while (timer < animTime)
+        {
+            timer += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(timer / animTime);
+            float curve = punchCurve.Evaluate(t);
+
+            if (finishTextCanvasGroup != null)
+                finishTextCanvasGroup.alpha = Mathf.Clamp01(t * 3f);
+            if (positionTextCanvasGroup != null)
+                positionTextCanvasGroup.alpha = Mathf.Clamp01(Mathf.Max(0f, t * 3f - 0.5f));
+
+            if (finishText != null)
+                finishText.transform.localScale = Vector3.Lerp(Vector3.one * 2.5f, Vector3.one, curve);
+            if (positionText != null)
+                positionText.transform.localScale = Vector3.Lerp(Vector3.one * 2f, Vector3.one, curve);
+
+            yield return null;
+        }
+
+        if (finishTextCanvasGroup != null) finishTextCanvasGroup.alpha = 1f;
+        if (positionTextCanvasGroup != null) positionTextCanvasGroup.alpha = 1f;
+        if (finishText != null) finishText.transform.localScale = Vector3.one;
+        if (positionText != null) positionText.transform.localScale = Vector3.one;
     }
 
     private string GetOrdinal(int pos)
