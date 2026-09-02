@@ -447,7 +447,7 @@ WheelCollider:
     damper: 4500
     targetPosition: 0.5
   m_SuspensionDistance: 0.25
-  m_ForceAppPointDistance: 0.2
+  m_ForceAppPointDistance: 0
   m_Mass: 20
   m_WheelDampingRate: 0.25
   m_ForwardFriction:
@@ -455,13 +455,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1.2
+    m_Stiffness: 1
   m_SidewaysFriction:
     m_ExtremumSlip: 0.25
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.45
     m_AsymptoteValue: 0.75
-    m_Stiffness: 1.6
+    m_Stiffness: 1
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -664,7 +664,7 @@ WheelCollider:
     damper: 4500
     targetPosition: 0.5
   m_SuspensionDistance: 0.25
-  m_ForceAppPointDistance: 0.2
+  m_ForceAppPointDistance: 0
   m_Mass: 20
   m_WheelDampingRate: 0.25
   m_ForwardFriction:
@@ -672,13 +672,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1.2
+    m_Stiffness: 1
   m_SidewaysFriction:
     m_ExtremumSlip: 0.18
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.35
     m_AsymptoteValue: 0.8
-    m_Stiffness: 1.8
+    m_Stiffness: 1
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -842,7 +842,7 @@ WheelCollider:
     damper: 4500
     targetPosition: 0.5
   m_SuspensionDistance: 0.25
-  m_ForceAppPointDistance: 0.2
+  m_ForceAppPointDistance: 0
   m_Mass: 20
   m_WheelDampingRate: 0.25
   m_ForwardFriction:
@@ -850,13 +850,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1.2
+    m_Stiffness: 1
   m_SidewaysFriction:
     m_ExtremumSlip: 0.18
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.35
     m_AsymptoteValue: 0.8
-    m_Stiffness: 1.8
+    m_Stiffness: 1
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -967,7 +967,7 @@ WheelCollider:
     damper: 4500
     targetPosition: 0.5
   m_SuspensionDistance: 0.25
-  m_ForceAppPointDistance: 0.2
+  m_ForceAppPointDistance: 0
   m_Mass: 20
   m_WheelDampingRate: 0.25
   m_ForwardFriction:
@@ -975,13 +975,13 @@ WheelCollider:
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 0.5
-    m_Stiffness: 1.2
+    m_Stiffness: 1
   m_SidewaysFriction:
     m_ExtremumSlip: 0.25
     m_ExtremumValue: 1
     m_AsymptoteSlip: 0.45
     m_AsymptoteValue: 0.75
-    m_Stiffness: 1.6
+    m_Stiffness: 1
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1578,7 +1578,7 @@ MonoBehaviour:
   - {fileID: 6957030637702143365}
   brakeLightIntensity: 2.5
   downforce: 70
-  angularDragNormal: 1.6
+  angularDragNormal: 0.05
   carVisual: {fileID: 4310077519567467934}
   bodyRollAmount: 7
   bodyPitchAmount: 3
