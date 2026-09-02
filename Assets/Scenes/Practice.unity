@@ -664,6 +664,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6251514337071259359, guid: 9b198876a69f4d8418de530c621ea543, type: 3}
+      propertyPath: brakePower
+      value: 5000
+      objectReference: {fileID: 0}
     - target: {fileID: 6910925846897662358, guid: 9b198876a69f4d8418de530c621ea543, type: 3}
       propertyPath: m_Name
       value: Mercedes

@@ -19,13 +19,23 @@ public class CarController : MonoBehaviour
     public Transform centerOfMass;
     public Vector3 fallbackCOM = new Vector3(0f, -0.65f, 0.05f);
 
-    [Header("Performance")]
-    public float motorPower = 1500f;
-    public float brakePower = 3000f;
-    public float topSpeedKmh = 240f;
+    [Header("Engine")]
+    public float motorPower = 2200f;
+    public float brakePower = 2500f;
+    public float topSpeedKmh = 220f;
 
     [Header("Steering")]
-    public float maxSteerAngle = 35f;
+    public float maxSteerAngle = 42f;
+    public float steerSpeed = 8f;
+    public float highSpeedSteerReduction = 0.4f;
+
+    [Header("Drift")]
+    public float driftMotorBoost = 1.3f;
+    public float driftBrakeRear = 0f;
+    public float driftSidewaysFriction = 0.6f;
+    public float normalSidewaysFriction = 1f;
+    public float driftForwardFriction = 0.8f;
+    public float normalForwardFriction = 1f;
 
     [Header("Brake Lights")]
     public Light[] brakeLights;
@@ -45,20 +55,28 @@ public class CarController : MonoBehaviour
     private float currentSteerAngle;
     private float lateralG;
     private float slipAngle;
+    private bool isDrifting;
+    private float driftFactor;
     Quaternion visualStartRot;
+
+    WheelFrictionCurve flForward, flSideways;
+    WheelFrictionCurve frForward, frSideways;
+    WheelFrictionCurve rlForward, rlSideways;
+    WheelFrictionCurve rrForward, rrSideways;
 
     public float SpeedKmh { get; private set; }
     public float ThrottleInput => gasInput;
+    public float EngineLoad => Mathf.Clamp01(Mathf.Abs(gasInput));
     public bool IsHandbraking => Input.GetKey(KeyCode.Space);
-    public float EngineLoad { get; private set; }
     public float LateralG => lateralG;
-    public bool IsDrifting { get; private set; }
+    public bool IsDrifting => isDrifting;
     public float DriftAngle { get; private set; }
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.mass = 1300f;
+        rb.angularDamping = 0.05f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
@@ -67,6 +85,20 @@ public class CarController : MonoBehaviour
             : fallbackCOM;
 
         visualStartRot = carVisual != null ? carVisual.localRotation : Quaternion.identity;
+
+        CacheFrictionCurves();
+    }
+
+    void CacheFrictionCurves()
+    {
+        flForward = wheelFL.forwardFriction;
+        flSideways = wheelFL.sidewaysFriction;
+        frForward = wheelFR.forwardFriction;
+        frSideways = wheelFR.sidewaysFriction;
+        rlForward = wheelRL.forwardFriction;
+        rlSideways = wheelRL.sidewaysFriction;
+        rrForward = wheelRR.forwardFriction;
+        rrSideways = wheelRR.sidewaysFriction;
     }
 
     void Update()
@@ -82,92 +114,160 @@ public class CarController : MonoBehaviour
 
     void FixedUpdate()
     {
-        CheckInput();
+        ReadInput();
 
         if (RaceManager.Instance != null && (!RaceManager.Instance.raceStarted || RaceManager.Instance.raceFinished))
         {
-            SetMotorTorque(0f);
-            SetBrakeTorque(300f);
+            ApplyBrakeTorque(300f);
+            ApplyMotor(0f);
             return;
         }
 
         SpeedKmh = rb.linearVelocity.magnitude * 3.6f;
 
-        ApplyMotor();
-        ApplySteering();
-        ApplyBrake();
         DetectDrift();
+        ApplyMotor(GetMotorTorque());
+        ApplySteering();
+        ApplyBraking();
+        ApplyDriftFriction();
         CalculateLateralG();
     }
 
-    void CheckInput()
+    void ReadInput()
     {
         gasInput = Input.GetAxis("Vertical");
         steeringInput = Input.GetAxis("Horizontal");
 
-        slipAngle = Vector3.Angle(transform.forward, rb.linearVelocity);
+        Vector3 vel = rb.linearVelocity;
+        vel.y = 0f;
+        slipAngle = vel.sqrMagnitude > 1f
+            ? Vector3.Angle(transform.forward, vel)
+            : 0f;
 
-        float movingDirection = Vector3.Dot(transform.forward, rb.linearVelocity);
-        if (movingDirection < -0.5f && gasInput > 0)
+        float movingDir = Vector3.Dot(transform.forward, rb.linearVelocity);
+
+        if (movingDir < -0.5f && gasInput > 0)
         {
-            brakeInput = Mathf.Abs(gasInput);
-            gasInput = 0;
+            brakeInput = gasInput;
+            gasInput = 0f;
         }
-        else if (movingDirection > 0.5f && gasInput < 0)
+        else if (movingDir > 0.5f && gasInput < -0.1f)
         {
-            brakeInput = Mathf.Abs(gasInput);
-            gasInput = 0;
+            brakeInput = -gasInput;
+            gasInput = 0f;
         }
         else
         {
-            brakeInput = 0;
-        }
-
-        if (Input.GetKey(KeyCode.Space))
-        {
-            brakeInput = 1f;
-            gasInput = 0f;
+            brakeInput = 0f;
         }
     }
 
-    void ApplyMotor()
+    float GetMotorTorque()
     {
-        wheelRL.motorTorque = motorPower * gasInput;
-        wheelRR.motorTorque = motorPower * gasInput;
+        float speedRatio = SpeedKmh / topSpeedKmh;
+
+        if (speedRatio >= 1f && gasInput > 0f)
+            return 0f;
+
+        float power = motorPower;
+
+        if (isDrifting)
+            power *= driftMotorBoost;
+
+        return power * gasInput;
+    }
+
+    void ApplyMotor(float torque)
+    {
+        wheelRL.motorTorque = torque;
+        wheelRR.motorTorque = torque;
     }
 
     void ApplySteering()
     {
-        float steeringAngle = steeringInput * maxSteerAngle;
+        float speedFactor = Mathf.Clamp01(SpeedKmh / topSpeedKmh);
+        float steerLimit = Mathf.Lerp(1f, highSpeedSteerReduction, speedFactor);
+        float targetAngle = steeringInput * maxSteerAngle * steerLimit;
 
-        if (slipAngle < 120f)
+        if (isDrifting && Mathf.Abs(steeringInput) > 0.1f)
         {
-            Vector3 vel = rb.linearVelocity;
-            vel.y = 0f;
-            if (vel.sqrMagnitude > 1f)
-            {
-                steeringAngle += Vector3.SignedAngle(transform.forward, vel + transform.forward, Vector3.up);
-            }
+            float driftAssist = Mathf.Sign(steeringInput) * driftFactor * 10f;
+            targetAngle += driftAssist;
         }
 
-        steeringAngle = Mathf.Clamp(steeringAngle, -90f, 90f);
-        wheelFL.steerAngle = steeringAngle;
-        wheelFR.steerAngle = steeringAngle;
+        currentSteerAngle = Mathf.Lerp(currentSteerAngle, targetAngle, Time.fixedDeltaTime * steerSpeed);
+
+        wheelFL.steerAngle = currentSteerAngle;
+        wheelFR.steerAngle = currentSteerAngle;
     }
 
-    void ApplyBrake()
+    void ApplyBraking()
     {
-        wheelFL.brakeTorque = brakeInput * brakePower * 0.7f;
-        wheelFR.brakeTorque = brakeInput * brakePower * 0.7f;
-        wheelRL.brakeTorque = brakeInput * brakePower * 0.3f;
-        wheelRR.brakeTorque = brakeInput * brakePower * 0.3f;
+        if (brakeInput > 0.1f)
+        {
+            float frontBrake = brakePower * brakeInput;
+            float rearBrake = isDrifting ? brakePower * brakeInput * driftBrakeRear : brakePower * brakeInput * 0.3f;
+
+            wheelFL.brakeTorque = frontBrake;
+            wheelFR.brakeTorque = frontBrake;
+            wheelRL.brakeTorque = rearBrake;
+            wheelRR.brakeTorque = rearBrake;
+        }
+        else if (Input.GetKey(KeyCode.Space))
+        {
+            wheelFL.brakeTorque = 0f;
+            wheelFR.brakeTorque = 0f;
+            wheelRL.brakeTorque = brakePower * 0.2f;
+            wheelRR.brakeTorque = brakePower * 0.2f;
+        }
+        else
+        {
+            ApplyBrakeTorque(0f);
+        }
+    }
+
+    void ApplyBrakeTorque(float torque)
+    {
+        wheelFL.brakeTorque = torque;
+        wheelFR.brakeTorque = torque;
+        wheelRL.brakeTorque = torque;
+        wheelRR.brakeTorque = torque;
     }
 
     void DetectDrift()
     {
-        IsDrifting = slipAngle > 20f && SpeedKmh > 20f;
-        DriftAngle = IsDrifting ? Mathf.Lerp(DriftAngle, slipAngle, Time.fixedDeltaTime * 8f)
-                                : Mathf.Lerp(DriftAngle, 0f, Time.fixedDeltaTime * 5f);
+        bool handbrake = Input.GetKey(KeyCode.Space);
+        bool speedCheck = SpeedKmh > 15f;
+        bool angleCheck = slipAngle > 15f;
+        bool powerOversteer = gasInput > 0.1f && SpeedKmh > 30f && Mathf.Abs(lateralG) > 0.4f;
+
+        isDrifting = speedCheck && (handbrake || angleCheck || powerOversteer);
+
+        float targetDrift = isDrifting ? Mathf.InverseLerp(15f, 40f, slipAngle) : 0f;
+        driftFactor = Mathf.Lerp(driftFactor, targetDrift, Time.fixedDeltaTime * 6f);
+
+        DriftAngle = Mathf.Lerp(DriftAngle, isDrifting ? slipAngle : 0f, Time.fixedDeltaTime * 5f);
+    }
+
+    void ApplyDriftFriction()
+    {
+        float sidewaysTarget = isDrifting ? driftSidewaysFriction : normalSidewaysFriction;
+        float forwardTarget = isDrifting ? driftForwardFriction : normalForwardFriction;
+
+        rlSideways.stiffness = Mathf.Lerp(rlSideways.stiffness, sidewaysTarget, Time.fixedDeltaTime * 8f);
+        rrSideways.stiffness = Mathf.Lerp(rrSideways.stiffness, sidewaysTarget, Time.fixedDeltaTime * 8f);
+        rlForward.stiffness = Mathf.Lerp(rlForward.stiffness, forwardTarget, Time.fixedDeltaTime * 8f);
+        rrForward.stiffness = Mathf.Lerp(rrForward.stiffness, forwardTarget, Time.fixedDeltaTime * 8f);
+
+        flSideways.stiffness = Mathf.Lerp(flSideways.stiffness, isDrifting ? 0.9f : normalSidewaysFriction, Time.fixedDeltaTime * 8f);
+        frSideways.stiffness = Mathf.Lerp(frSideways.stiffness, isDrifting ? 0.9f : normalSidewaysFriction, Time.fixedDeltaTime * 8f);
+
+        wheelRL.sidewaysFriction = rlSideways;
+        wheelRR.sidewaysFriction = rrSideways;
+        wheelRL.forwardFriction = rlForward;
+        wheelRR.forwardFriction = rrForward;
+        wheelFL.sidewaysFriction = flSideways;
+        wheelFR.sidewaysFriction = frSideways;
     }
 
     void CalculateLateralG()
@@ -175,20 +275,6 @@ public class CarController : MonoBehaviour
         Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
         float targetLateralG = localVel.x / 9.81f;
         lateralG = Mathf.Lerp(lateralG, targetLateralG, Time.fixedDeltaTime * 10f);
-    }
-
-    void SetMotorTorque(float torque)
-    {
-        wheelRL.motorTorque = torque;
-        wheelRR.motorTorque = torque;
-    }
-
-    void SetBrakeTorque(float torque)
-    {
-        wheelFL.brakeTorque = torque;
-        wheelFR.brakeTorque = torque;
-        wheelRL.brakeTorque = torque;
-        wheelRR.brakeTorque = torque;
     }
 
     void UpdateWheelMeshes()
