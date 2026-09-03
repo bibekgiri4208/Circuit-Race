@@ -22,17 +22,12 @@ public class ChaseCamera : MonoBehaviour
     public float boostHeightIncrease = 0.3f;
     public float boostCameraSmoothness = 8f;
 
-    [Header("Boost Shake")]
-    public float boostShakeStrength = 0.08f;
-    public float boostShakeSpeed = 35f;
-
     [HideInInspector] public bool holdPosition = false;
 
     private float yaw;
     private float pitch = 15f;
 
     private Vector3 currentOffset;
-    private float shakeTimer;
 
     private void Start()
     {
@@ -90,11 +85,6 @@ public class ChaseCamera : MonoBehaviour
 
         Vector3 desiredPosition = target.position + cameraRotation * currentOffset;
 
-        if (isBoosting)
-        {
-            desiredPosition += GetBoostShake(cameraRotation);
-        }
-
         transform.position = Vector3.Lerp(
             transform.position,
             desiredPosition,
@@ -105,15 +95,4 @@ public class ChaseCamera : MonoBehaviour
         transform.rotation = Quaternion.LookRotation(lookPoint - transform.position);
     }
 
-    private Vector3 GetBoostShake(Quaternion cameraRotation)
-    {
-        shakeTimer += Time.deltaTime * boostShakeSpeed;
-
-        float shakeX = Mathf.Sin(shakeTimer) * boostShakeStrength;
-        float shakeY = Mathf.Cos(shakeTimer * 1.4f) * boostShakeStrength;
-
-        Vector3 localShake = new Vector3(shakeX, shakeY, 0f);
-
-        return cameraRotation * localShake;
-    }
 }

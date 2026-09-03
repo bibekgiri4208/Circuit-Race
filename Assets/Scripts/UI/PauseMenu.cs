@@ -8,11 +8,13 @@ public class PauseMenu : MonoBehaviour
     private GameObject pauseButtonObj;
     private GameObject pausePanel;
     private bool isPaused;
+    private bool cursorLocked;
 
     void Start()
     {
         CreateUI();
         Time.timeScale = 1f;
+        LockCursor();
     }
 
     void Update()
@@ -23,6 +25,14 @@ public class PauseMenu : MonoBehaviour
                 Resume();
             else
                 Pause();
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftAlt))
+        {
+            if (cursorLocked)
+                UnlockCursor();
+            else
+                LockCursor();
         }
     }
 
@@ -86,6 +96,7 @@ public class PauseMenu : MonoBehaviour
         AudioListener.pause = true;
         pausePanel.SetActive(true);
         pauseButtonObj.SetActive(false);
+        UnlockCursor();
     }
 
     public void Resume()
@@ -95,6 +106,7 @@ public class PauseMenu : MonoBehaviour
         AudioListener.pause = false;
         pausePanel.SetActive(false);
         pauseButtonObj.SetActive(true);
+        LockCursor();
     }
 
     public void Restart()
@@ -104,11 +116,25 @@ public class PauseMenu : MonoBehaviour
         LoadingScreen.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    public void Quit()
+    public     void Quit()
     {
         Time.timeScale = 1f;
         AudioListener.pause = false;
         LoadingScreen.LoadScene("Garage");
+    }
+
+    void LockCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        cursorLocked = true;
+    }
+
+    void UnlockCursor()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        cursorLocked = false;
     }
 
     GameObject CreateButton(Transform parent, string name, string label,
