@@ -58,6 +58,7 @@ public class CarController : MonoBehaviour
     private bool isDrifting;
     private float driftFactor;
     Quaternion visualStartRot;
+    private Quaternion meshFLLocalRot, meshFRLocalRot, meshRLLocalRot, meshRRLocalRot;
 
     WheelFrictionCurve flForward, flSideways;
     WheelFrictionCurve frForward, frSideways;
@@ -85,6 +86,11 @@ public class CarController : MonoBehaviour
             : fallbackCOM;
 
         visualStartRot = carVisual != null ? carVisual.localRotation : Quaternion.identity;
+
+        meshFLLocalRot = meshFL != null ? meshFL.localRotation : Quaternion.identity;
+        meshFRLocalRot = meshFR != null ? meshFR.localRotation : Quaternion.identity;
+        meshRLLocalRot = meshRL != null ? meshRL.localRotation : Quaternion.identity;
+        meshRRLocalRot = meshRR != null ? meshRR.localRotation : Quaternion.identity;
 
         CacheFrictionCurves();
     }
@@ -279,18 +285,18 @@ public class CarController : MonoBehaviour
 
     void UpdateWheelMeshes()
     {
-        UpdateSingleWheel(wheelFL, meshFL);
-        UpdateSingleWheel(wheelFR, meshFR);
-        UpdateSingleWheel(wheelRL, meshRL);
-        UpdateSingleWheel(wheelRR, meshRR);
+        UpdateSingleWheel(wheelFL, meshFL, meshFLLocalRot);
+        UpdateSingleWheel(wheelFR, meshFR, meshFRLocalRot);
+        UpdateSingleWheel(wheelRL, meshRL, meshRLLocalRot);
+        UpdateSingleWheel(wheelRR, meshRR, meshRRLocalRot);
     }
 
-    void UpdateSingleWheel(WheelCollider col, Transform mesh)
+    void UpdateSingleWheel(WheelCollider col, Transform mesh, Quaternion baseRot)
     {
         if (col == null || mesh == null) return;
         col.GetWorldPose(out Vector3 pos, out Quaternion rot);
         mesh.position = pos;
-        mesh.rotation = rot;
+        mesh.rotation = rot * baseRot;
     }
 
     void UpdateBodyVisual()
