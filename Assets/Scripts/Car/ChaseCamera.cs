@@ -17,22 +17,13 @@ public class ChaseCamera : MonoBehaviour
     public float minPitch = -10f;
     public float maxPitch = 45f;
 
-    [Header("Boost Camera Effect")]
-    public float boostPullBackDistance = 2.5f;
-    public float boostHeightIncrease = 0.3f;
-    public float boostCameraSmoothness = 8f;
-
     [HideInInspector] public bool holdPosition = false;
 
     private float yaw;
     private float pitch = 15f;
 
-    private Vector3 currentOffset;
-
     private void Start()
     {
-        currentOffset = offset;
-
         if (target != null)
         {
             yaw = target.eulerAngles.y;
@@ -62,28 +53,9 @@ public class ChaseCamera : MonoBehaviour
 
     private void FollowTarget()
     {
-        bool isBoosting = Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
-
-        Vector3 targetOffset = offset;
-
-        if (isBoosting)
-        {
-            targetOffset = new Vector3(
-                offset.x,
-                offset.y + boostHeightIncrease,
-                offset.z - boostPullBackDistance
-            );
-        }
-
-        currentOffset = Vector3.Lerp(
-            currentOffset,
-            targetOffset,
-            boostCameraSmoothness * Time.deltaTime
-        );
-
         Quaternion cameraRotation = Quaternion.Euler(pitch, yaw, 0f);
 
-        Vector3 desiredPosition = target.position + cameraRotation * currentOffset;
+        Vector3 desiredPosition = target.position + cameraRotation * offset;
 
         transform.position = Vector3.Lerp(
             transform.position,

@@ -522,16 +522,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3e4f5a6c7d8e9f0a1b2c3d4e5f6a7b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!54 &988484513 stripped
-Rigidbody:
-  m_CorrespondingSourceObject: {fileID: 1973765722154183076, guid: 9b198876a69f4d8418de530c621ea543, type: 3}
-  m_PrefabInstance: {fileID: 5405592255875565293}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &988484514 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4765108690556850204, guid: 9b198876a69f4d8418de530c621ea543, type: 3}
-  m_PrefabInstance: {fileID: 5405592255875565293}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1045333910
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -559,7 +549,7 @@ PrefabInstance:
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: target
       value: 
-      objectReference: {fileID: 988484514}
+      objectReference: {fileID: 1152945355}
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: offset.y
       value: 2
@@ -571,7 +561,7 @@ PrefabInstance:
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: targetRb
       value: 
-      objectReference: {fileID: 988484513}
+      objectReference: {fileID: 1152945354}
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: lookHeight
       value: 1.2
@@ -633,6 +623,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
+--- !u!54 &1152945354 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 4342560386248442589, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
+  m_PrefabInstance: {fileID: 1797004093}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1152945355 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8183137220687926130, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
+  m_PrefabInstance: {fileID: 1797004093}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1187779334
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -943,7 +943,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3789611207696627354, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4071438367746283832, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
       propertyPath: highSpeedSteerLimit
@@ -1651,20 +1651,10 @@ MonoBehaviour:
   maxSteerAngle: 35
   steerSpeed: 8
   highSpeedSteerReduction: 0.4
-  driftMotorBoost: 1.3
-  driftBrakeRear: 0
-  driftSidewaysFriction: 0.6
-  normalSidewaysFriction: 1
-  driftForwardFriction: 0.8
-  normalForwardFriction: 1
   brakeLights:
   - {fileID: 6132700529556116526}
   - {fileID: 2516586622160392511}
   brakeLightIntensity: 2.5
-  carVisual: {fileID: 4036326010758546140}
-  bodyRollAmount: 7
-  bodyPitchAmount: 3
-  bodyRollSpeed: 5
 --- !u!1 &2715186246111861079
 GameObject:
   m_ObjectHideFlags: 0
@@ -2669,7 +2659,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6910925846897662358, guid: 9b198876a69f4d8418de530c621ea543, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

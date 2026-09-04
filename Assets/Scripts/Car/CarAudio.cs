@@ -91,7 +91,7 @@ public class CarAudio : MonoBehaviour
 
         float gearMinSpeed = currentGear == 0 ? 0f : gearSpeeds[currentGear - 1];
         float gearMaxSpeed = currentGear >= gearSpeeds.Length
-            ? car.topSpeedKmh
+            ? car.maxForwardSpeed
             : gearSpeeds[currentGear];
 
         float gearProgress = Mathf.InverseLerp(

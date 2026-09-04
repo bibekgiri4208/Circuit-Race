@@ -10532,35 +10532,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfff27f9ee9ff6a4d90ea19f18243402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SimcadeCarController
-  wheelFL: {fileID: 8200362312933278641}
-  wheelFR: {fileID: 1290451482499615162}
-  wheelRL: {fileID: 382714570906972804}
-  wheelRR: {fileID: 1348804887175897991}
-  meshFL: {fileID: 4292080355232032418}
-  meshFR: {fileID: 7445386931318427241}
-  meshRL: {fileID: 6900478345221587159}
-  meshRR: {fileID: 87382863714727847}
-  centerOfMass: {fileID: 8382093289250000600}
-  fallbackCOM: {x: 0, y: -0.62, z: 0.12}
-  motorTorque: 5000
-  reverseTorque: 3000
-  topSpeedKmh: 180
+  frontLeftCollider: {fileID: 8200362312933278641}
+  frontRightCollider: {fileID: 1290451482499615162}
+  rearLeftCollider: {fileID: 382714570906972804}
+  rearRightCollider: {fileID: 1348804887175897991}
+  frontLeftMesh: {fileID: 4292080355232032418}
+  frontRightMesh: {fileID: 7445386931318427241}
+  rearLeftMesh: {fileID: 6900478345221587159}
+  rearRightMesh: {fileID: 87382863714727847}
+  motorForce: 1500
+  brakeForce: 3000
   maxSteerAngle: 42
-  steerResponse: 11
-  highSpeedSteerLimit: 0.1
-  brakeTorque: 5000
-  idleBrakeTorque: 250
-  handbrakeTorque: 6500
+  handbrakeForce: 5000
+  maxForwardSpeed: 35
+  maxReverseSpeed: 12
+  boostForce: 9000
+  boostMaxSpeed: 55
+  steerSmoothSpeed: 6
+  minSteerAngleAtHighSpeed: 10
+  steeringSpeedForMinAngle: 30
+  downForce: 80
+  centerOfMassOffset: {x: 0, y: -0.5, z: 0}
   brakeLights:
   - {fileID: 893871235139414066}
   - {fileID: 4242929762821317808}
   brakeLightIntensity: 2.5
-  downforce: 50
-  angularDragNormal: 0.05
-  carVisual: {fileID: 3944808144873195727}
-  bodyRollAmount: 7
-  bodyPitchAmount: 3
-  bodyRollSpeed: 5
 --- !u!114 &3233348609140474377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10640,6 +10636,7 @@ MonoBehaviour:
   brakeSkidSmokeRate: 80
   lateralSlideThreshold: 2.5
   corneringSmokeRate: 45
+  driftSmokeRate: 100
 --- !u!1 &4000121307784763447
 GameObject:
   m_ObjectHideFlags: 0
