@@ -1040,34 +1040,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfff27f9ee9ff6a4d90ea19f18243402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarController
-  wheelFL: {fileID: 3930875736044283019}
-  wheelFR: {fileID: 1972773287381880341}
-  wheelRL: {fileID: 786984286167555233}
-  wheelRR: {fileID: 6628560786471493552}
-  meshFL: {fileID: 6685085997259873133}
-  meshFR: {fileID: 5768246339611210003}
-  meshRL: {fileID: 3965759245594735103}
-  meshRR: {fileID: 165424465372118930}
-  centerOfMass: {fileID: 9074159548193947619}
-  fallbackCOM: {x: 0, y: -0.65, z: 0.05}
-  motorPower: 2200
-  brakePower: 5000
-  topSpeedKmh: 220
+  frontLeftCollider: {fileID: 3930875736044283019}
+  frontRightCollider: {fileID: 1972773287381880341}
+  rearLeftCollider: {fileID: 786984286167555233}
+  rearRightCollider: {fileID: 6628560786471493552}
+  frontLeftMesh: {fileID: 6685085997259873133}
+  frontRightMesh: {fileID: 5768246339611210003}
+  rearLeftMesh: {fileID: 3965759245594735103}
+  rearRightMesh: {fileID: 165424465372118930}
+  motorForce: 1500
+  brakeForce: 3000
   maxSteerAngle: 42
-  steerSpeed: 8
-  highSpeedSteerReduction: 0.4
-  driftMotorBoost: 1.3
-  driftBrakeRear: 0
-  driftSidewaysFriction: 0.6
-  normalSidewaysFriction: 1
-  driftForwardFriction: 0.8
-  normalForwardFriction: 1
+  handbrakeForce: 5000
+  maxForwardSpeed: 35
+  maxReverseSpeed: 12
+  boostForce: 9000
+  boostMaxSpeed: 55
+  steerSmoothSpeed: 6
+  minSteerAngleAtHighSpeed: 10
+  steeringSpeedForMinAngle: 30
+  downForce: 70
+  centerOfMassOffset: {x: 0, y: -0.5, z: 0}
+  carVisual: {fileID: 916866150531814341}
+  bodyRollAmount: 1
+  bodyRollSpeed: 4
   brakeLights: []
   brakeLightIntensity: 2.5
-  carVisual: {fileID: 916866150531814341}
-  bodyRollAmount: 0
-  bodyPitchAmount: 0
-  bodyRollSpeed: 0
 --- !u!114 &3296026926621443568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1939,6 +1937,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2954372678959319195}
   - component: {fileID: 1972773287381880341}
+  - component: {fileID: 2202349483831824555}
   m_Layer: 0
   m_Name: Collider FR
   m_TagString: Untagged
@@ -2000,6 +1999,22 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!114 &2202349483831824555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3789812279917462057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1848074eee38bc247a4f6de3aa81ca60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WheelSkid
+  SkidSound: {fileID: 3016661159831351936}
+  SkidSoundMultiplyer: 0.2
+  rb: {fileID: 5558918578247824674}
+  skidmarksController: {fileID: 0}
 --- !u!1 &4196851167084097359
 GameObject:
   m_ObjectHideFlags: 0
@@ -2537,6 +2552,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1207925646811111421}
   - component: {fileID: 3930875736044283019}
+  - component: {fileID: 8921729157458251868}
   m_Layer: 0
   m_Name: Collider FL
   m_TagString: Untagged
@@ -2598,6 +2614,22 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!114 &8921729157458251868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4833496124203954050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1848074eee38bc247a4f6de3aa81ca60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WheelSkid
+  SkidSound: {fileID: 3016661159831351936}
+  SkidSoundMultiplyer: 0.2
+  rb: {fileID: 5558918578247824674}
+  skidmarksController: {fileID: 0}
 --- !u!1 &5173236980472849516
 GameObject:
   m_ObjectHideFlags: 0
@@ -3106,6 +3138,7 @@ GameObject:
   m_Component:
   - component: {fileID: 690144266556544714}
   - component: {fileID: 6628560786471493552}
+  - component: {fileID: 6874962001861469793}
   m_Layer: 0
   m_Name: Collider RR
   m_TagString: Untagged
@@ -3167,6 +3200,22 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!114 &6874962001861469793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5771383533425509545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1848074eee38bc247a4f6de3aa81ca60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WheelSkid
+  SkidSound: {fileID: 3016661159831351936}
+  SkidSoundMultiplyer: 0.2
+  rb: {fileID: 5558918578247824674}
+  skidmarksController: {fileID: 0}
 --- !u!1 &6160465540854859906
 GameObject:
   m_ObjectHideFlags: 0
@@ -3794,6 +3843,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8856841243722849537}
   - component: {fileID: 786984286167555233}
+  - component: {fileID: 6211120973879956290}
   m_Layer: 0
   m_Name: Collider RL
   m_TagString: Untagged
@@ -3855,6 +3905,22 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!114 &6211120973879956290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7043065956251294231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1848074eee38bc247a4f6de3aa81ca60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WheelSkid
+  SkidSound: {fileID: 3016661159831351936}
+  SkidSoundMultiplyer: 0.2
+  rb: {fileID: 5558918578247824674}
+  skidmarksController: {fileID: 0}
 --- !u!1 &7105177403679619369
 GameObject:
   m_ObjectHideFlags: 0

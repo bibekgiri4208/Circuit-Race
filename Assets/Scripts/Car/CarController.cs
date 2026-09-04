@@ -1,313 +1,262 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
 public class CarController : MonoBehaviour
 {
     [Header("Wheel Colliders")]
-    public WheelCollider wheelFL;
-    public WheelCollider wheelFR;
-    public WheelCollider wheelRL;
-    public WheelCollider wheelRR;
+    public WheelCollider frontLeftCollider;
+    public WheelCollider frontRightCollider;
+    public WheelCollider rearLeftCollider;
+    public WheelCollider rearRightCollider;
 
     [Header("Wheel Meshes")]
-    public Transform meshFL;
-    public Transform meshFR;
-    public Transform meshRL;
-    public Transform meshRR;
+    public Transform frontLeftMesh;
+    public Transform frontRightMesh;
+    public Transform rearLeftMesh;
+    public Transform rearRightMesh;
 
-    [Header("Center Of Mass")]
-    public Transform centerOfMass;
-    public Vector3 fallbackCOM = new Vector3(0f, -0.65f, 0.05f);
+    [Header("Car Settings")]
+    public float motorForce = 1500f;
+    public float brakeForce = 3000f;
+    public float maxSteerAngle = 30f;
+    public float handbrakeForce = 5000f;
 
-    [Header("Engine")]
-    public float motorPower = 2200f;
-    public float brakePower = 2500f;
-    public float topSpeedKmh = 220f;
+    [Header("Speed Limit")]
+    public float maxForwardSpeed = 35f;
+    public float maxReverseSpeed = 12f;
 
-    [Header("Steering")]
-    public float maxSteerAngle = 42f;
-    public float steerSpeed = 8f;
-    public float highSpeedSteerReduction = 0.4f;
+    [Header("NOS Boost Settings")]
+    public float boostForce = 9000f;
+    public float boostMaxSpeed = 55f;
 
-    [Header("Drift")]
-    public float driftMotorBoost = 1.3f;
-    public float driftBrakeRear = 0f;
-    public float driftSidewaysFriction = 0.6f;
-    public float normalSidewaysFriction = 1f;
-    public float driftForwardFriction = 0.8f;
-    public float normalForwardFriction = 1f;
+    [Header("Steering Assist")]
+    public float steerSmoothSpeed = 6f;
+    public float minSteerAngleAtHighSpeed = 10f;
+    public float steeringSpeedForMinAngle = 30f;
+
+    [Header("Stability")]
+    public float downForce = 80f;
+    public Vector3 centerOfMassOffset = new Vector3(0f, -0.5f, 0f);
+
+    [Header("Body Visual")]
+    public Transform carVisual;
+    public float bodyRollAmount = 2f;
+    public float bodyRollSpeed = 4f;
 
     [Header("Brake Lights")]
     public Light[] brakeLights;
     public float brakeLightIntensity = 2.5f;
 
-    [Header("Body Visual")]
-    public Transform carVisual;
-    public float bodyRollAmount = 5f;
-    public float bodyPitchAmount = 3f;
-    public float bodyRollSpeed = 8f;
-
-    Rigidbody rb;
-
-    private float gasInput;
-    private float brakeInput;
-    private float steeringInput;
+    private float horizontalInput;
+    private float verticalInput;
+    private bool isHandbraking;
     private float currentSteerAngle;
-    private float lateralG;
-    private float slipAngle;
-    private bool isDrifting;
-    private float driftFactor;
-    Quaternion visualStartRot;
-    private Quaternion meshFLLocalRot, meshFRLocalRot, meshRLLocalRot, meshRRLocalRot;
+    private Quaternion visualStartRot;
 
-    WheelFrictionCurve flForward, flSideways;
-    WheelFrictionCurve frForward, frSideways;
-    WheelFrictionCurve rlForward, rlSideways;
-    WheelFrictionCurve rrForward, rrSideways;
+    public bool IsBoosting { get; private set; }
+    public Rigidbody CarRigidbody { get; private set; }
 
     public float SpeedKmh { get; private set; }
-    public float ThrottleInput => gasInput;
-    public float EngineLoad => Mathf.Clamp01(Mathf.Abs(gasInput));
-    public bool IsHandbraking => Input.GetKey(KeyCode.Space);
-    public float LateralG => lateralG;
-    public bool IsDrifting => isDrifting;
-    public float DriftAngle { get; private set; }
+    public float ThrottleInput => verticalInput;
+    public float EngineLoad => Mathf.Clamp01(Mathf.Abs(verticalInput));
+    public bool IsHandbraking => isHandbraking;
+    public bool IsDrifting => false;
 
-    void Start()
+    private void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        rb.mass = 1300f;
-        rb.angularDamping = 0.05f;
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        CarRigidbody = GetComponent<Rigidbody>();
+        CarRigidbody.mass = 1300f;
+        CarRigidbody.angularDamping = 0.05f;
+        CarRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+        CarRigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        rb.centerOfMass = centerOfMass != null
-            ? transform.InverseTransformPoint(centerOfMass.position)
-            : fallbackCOM;
+        if (centerOfMassOffset != Vector3.zero)
+        {
+            CarRigidbody.centerOfMass += centerOfMassOffset;
+        }
 
         visualStartRot = carVisual != null ? carVisual.localRotation : Quaternion.identity;
-
-        meshFLLocalRot = meshFL != null ? meshFL.localRotation : Quaternion.identity;
-        meshFRLocalRot = meshFR != null ? meshFR.localRotation : Quaternion.identity;
-        meshRLLocalRot = meshRL != null ? meshRL.localRotation : Quaternion.identity;
-        meshRRLocalRot = meshRR != null ? meshRR.localRotation : Quaternion.identity;
-
-        CacheFrictionCurves();
     }
 
-    void CacheFrictionCurves()
+    private void Update()
     {
-        flForward = wheelFL.forwardFriction;
-        flSideways = wheelFL.sidewaysFriction;
-        frForward = wheelFR.forwardFriction;
-        frSideways = wheelFR.sidewaysFriction;
-        rlForward = wheelRL.forwardFriction;
-        rlSideways = wheelRL.sidewaysFriction;
-        rrForward = wheelRR.forwardFriction;
-        rrSideways = wheelRR.sidewaysFriction;
-    }
-
-    void Update()
-    {
+        GetInput();
+        UpdateWheelMeshes();
         UpdateBodyVisual();
         HandleBrakeLights();
     }
 
-    void LateUpdate()
+    private void FixedUpdate()
     {
-        UpdateWheelMeshes();
+        SpeedKmh = CarRigidbody.linearVelocity.magnitude * 3.6f;
+
+        HandleMotor();
+        HandleSteering();
+        HandleBraking();
+        HandleBoost();
+        ApplyDownforce();
     }
 
-    void FixedUpdate()
+    private void GetInput()
     {
-        ReadInput();
+        horizontalInput = 0f;
+        verticalInput = 0f;
 
-        if (RaceManager.Instance != null && (!RaceManager.Instance.raceStarted || RaceManager.Instance.raceFinished))
+        if (Keyboard.current != null)
         {
-            ApplyBrakeTorque(300f);
-            ApplyMotor(0f);
+            if (Keyboard.current.aKey.isPressed)
+                horizontalInput -= 1f;
+            if (Keyboard.current.dKey.isPressed)
+                horizontalInput += 1f;
+            if (Keyboard.current.wKey.isPressed)
+                verticalInput += 1f;
+            if (Keyboard.current.sKey.isPressed)
+                verticalInput -= 1f;
+
+            isHandbraking = Keyboard.current.spaceKey.isPressed;
+            IsBoosting = Keyboard.current.leftShiftKey.isPressed;
+        }
+
+        if (Gamepad.current != null)
+        {
+            Vector2 leftStick = Gamepad.current.leftStick.ReadValue();
+            float r2 = Gamepad.current.rightTrigger.ReadValue();
+            float l2 = Gamepad.current.leftTrigger.ReadValue();
+
+            horizontalInput += leftStick.x;
+            verticalInput += r2 - l2;
+
+            if (Gamepad.current.buttonSouth.isPressed)
+            {
+                IsBoosting = true;
+            }
+        }
+
+        horizontalInput = Mathf.Clamp(horizontalInput, -1f, 1f);
+        verticalInput = Mathf.Clamp(verticalInput, -1f, 1f);
+    }
+
+    private void HandleMotor()
+    {
+        float forwardSpeed = Vector3.Dot(CarRigidbody.linearVelocity, transform.forward);
+
+        bool overForwardSpeed = forwardSpeed >= maxForwardSpeed && verticalInput > 0f && !IsBoosting;
+        bool overReverseSpeed = forwardSpeed <= -maxReverseSpeed && verticalInput < 0f;
+
+        if (overForwardSpeed || overReverseSpeed)
+        {
+            rearLeftCollider.motorTorque = 0f;
+            rearRightCollider.motorTorque = 0f;
             return;
         }
 
-        SpeedKmh = rb.linearVelocity.magnitude * 3.6f;
+        float torque = verticalInput * motorForce;
 
-        DetectDrift();
-        ApplyMotor(GetMotorTorque());
-        ApplySteering();
-        ApplyBraking();
-        ApplyDriftFriction();
-        CalculateLateralG();
+        rearLeftCollider.motorTorque = torque;
+        rearRightCollider.motorTorque = torque;
     }
 
-    void ReadInput()
+    private void HandleBoost()
     {
-        gasInput = Input.GetAxis("Vertical");
-        steeringInput = Input.GetAxis("Horizontal");
+        if (!IsBoosting)
+            return;
 
-        Vector3 vel = rb.linearVelocity;
-        vel.y = 0f;
-        slipAngle = vel.sqrMagnitude > 1f
-            ? Vector3.Angle(transform.forward, vel)
-            : 0f;
+        float forwardSpeed = Vector3.Dot(CarRigidbody.linearVelocity, transform.forward);
 
-        float movingDir = Vector3.Dot(transform.forward, rb.linearVelocity);
+        if (forwardSpeed >= boostMaxSpeed)
+            return;
 
-        if (movingDir < -0.5f && gasInput > 0)
-        {
-            brakeInput = gasInput;
-            gasInput = 0f;
-        }
-        else if (movingDir > 0.5f && gasInput < -0.1f)
-        {
-            brakeInput = -gasInput;
-            gasInput = 0f;
-        }
-        else
-        {
-            brakeInput = 0f;
-        }
+        CarRigidbody.AddForce(transform.forward * boostForce, ForceMode.Force);
     }
 
-    float GetMotorTorque()
+    private void HandleSteering()
     {
-        float speedRatio = SpeedKmh / topSpeedKmh;
+        float speed = CarRigidbody.linearVelocity.magnitude;
+        float speedPercent = Mathf.Clamp01(speed / steeringSpeedForMinAngle);
 
-        if (speedRatio >= 1f && gasInput > 0f)
-            return 0f;
+        float adjustedMaxSteerAngle = Mathf.Lerp(
+            maxSteerAngle,
+            minSteerAngleAtHighSpeed,
+            speedPercent
+        );
 
-        float power = motorPower;
+        float targetSteerAngle = horizontalInput * adjustedMaxSteerAngle;
 
-        if (isDrifting)
-            power *= driftMotorBoost;
+        currentSteerAngle = Mathf.Lerp(
+            currentSteerAngle,
+            targetSteerAngle,
+            steerSmoothSpeed * Time.fixedDeltaTime
+        );
 
-        return power * gasInput;
+        frontLeftCollider.steerAngle = currentSteerAngle;
+        frontRightCollider.steerAngle = currentSteerAngle;
     }
 
-    void ApplyMotor(float torque)
+    private void HandleBraking()
     {
-        wheelRL.motorTorque = torque;
-        wheelRR.motorTorque = torque;
-    }
+        float forwardSpeed = Vector3.Dot(CarRigidbody.linearVelocity, transform.forward);
 
-    void ApplySteering()
-    {
-        float speedFactor = Mathf.Clamp01(SpeedKmh / topSpeedKmh);
-        float steerLimit = Mathf.Lerp(1f, highSpeedSteerReduction, speedFactor);
-        float targetAngle = steeringInput * maxSteerAngle * steerLimit;
+        bool pressingReverse = verticalInput < -0.1f;
+        bool movingForward = forwardSpeed > 1f;
 
-        if (isDrifting && Mathf.Abs(steeringInput) > 0.1f)
+        float currentBrakeForce = 0f;
+
+        if (pressingReverse && movingForward)
         {
-            float driftAssist = Mathf.Sign(steeringInput) * driftFactor * 10f;
-            targetAngle += driftAssist;
+            currentBrakeForce = brakeForce;
+            rearLeftCollider.motorTorque = 0f;
+            rearRightCollider.motorTorque = 0f;
         }
 
-        currentSteerAngle = Mathf.Lerp(currentSteerAngle, targetAngle, Time.fixedDeltaTime * steerSpeed);
+        frontLeftCollider.brakeTorque = currentBrakeForce;
+        frontRightCollider.brakeTorque = currentBrakeForce;
+        rearLeftCollider.brakeTorque = currentBrakeForce;
+        rearRightCollider.brakeTorque = currentBrakeForce;
 
-        wheelFL.steerAngle = currentSteerAngle;
-        wheelFR.steerAngle = currentSteerAngle;
-    }
-
-    void ApplyBraking()
-    {
-        if (brakeInput > 0.1f)
+        if (isHandbraking)
         {
-            float frontBrake = brakePower * brakeInput;
-            float rearBrake = isDrifting ? brakePower * brakeInput * driftBrakeRear : brakePower * brakeInput * 0.3f;
-
-            wheelFL.brakeTorque = frontBrake;
-            wheelFR.brakeTorque = frontBrake;
-            wheelRL.brakeTorque = rearBrake;
-            wheelRR.brakeTorque = rearBrake;
-        }
-        else if (Input.GetKey(KeyCode.Space))
-        {
-            wheelFL.brakeTorque = 0f;
-            wheelFR.brakeTorque = 0f;
-            wheelRL.brakeTorque = brakePower * 0.2f;
-            wheelRR.brakeTorque = brakePower * 0.2f;
-        }
-        else
-        {
-            ApplyBrakeTorque(0f);
+            rearLeftCollider.brakeTorque = handbrakeForce;
+            rearRightCollider.brakeTorque = handbrakeForce;
         }
     }
 
-    void ApplyBrakeTorque(float torque)
+    private void ApplyDownforce()
     {
-        wheelFL.brakeTorque = torque;
-        wheelFR.brakeTorque = torque;
-        wheelRL.brakeTorque = torque;
-        wheelRR.brakeTorque = torque;
+        float speed = CarRigidbody.linearVelocity.magnitude;
+        CarRigidbody.AddForce(-transform.up * downForce * speed);
     }
 
-    void DetectDrift()
+    private void UpdateWheelMeshes()
     {
-        bool handbrake = Input.GetKey(KeyCode.Space);
-        bool speedCheck = SpeedKmh > 15f;
-        bool angleCheck = slipAngle > 15f;
-        bool powerOversteer = gasInput > 0.1f && SpeedKmh > 30f && Mathf.Abs(lateralG) > 0.4f;
-
-        isDrifting = speedCheck && (handbrake || angleCheck || powerOversteer);
-
-        float targetDrift = isDrifting ? Mathf.InverseLerp(15f, 40f, slipAngle) : 0f;
-        driftFactor = Mathf.Lerp(driftFactor, targetDrift, Time.fixedDeltaTime * 6f);
-
-        DriftAngle = Mathf.Lerp(DriftAngle, isDrifting ? slipAngle : 0f, Time.fixedDeltaTime * 5f);
+        UpdateSingleWheel(frontLeftCollider, frontLeftMesh);
+        UpdateSingleWheel(frontRightCollider, frontRightMesh);
+        UpdateSingleWheel(rearLeftCollider, rearLeftMesh);
+        UpdateSingleWheel(rearRightCollider, rearRightMesh);
     }
 
-    void ApplyDriftFriction()
+    private void UpdateSingleWheel(WheelCollider wheelCollider, Transform wheelMesh)
     {
-        float sidewaysTarget = isDrifting ? driftSidewaysFriction : normalSidewaysFriction;
-        float forwardTarget = isDrifting ? driftForwardFriction : normalForwardFriction;
+        if (wheelCollider == null || wheelMesh == null) return;
 
-        rlSideways.stiffness = Mathf.Lerp(rlSideways.stiffness, sidewaysTarget, Time.fixedDeltaTime * 8f);
-        rrSideways.stiffness = Mathf.Lerp(rrSideways.stiffness, sidewaysTarget, Time.fixedDeltaTime * 8f);
-        rlForward.stiffness = Mathf.Lerp(rlForward.stiffness, forwardTarget, Time.fixedDeltaTime * 8f);
-        rrForward.stiffness = Mathf.Lerp(rrForward.stiffness, forwardTarget, Time.fixedDeltaTime * 8f);
+        Vector3 position;
+        Quaternion rotation;
 
-        flSideways.stiffness = Mathf.Lerp(flSideways.stiffness, isDrifting ? 0.9f : normalSidewaysFriction, Time.fixedDeltaTime * 8f);
-        frSideways.stiffness = Mathf.Lerp(frSideways.stiffness, isDrifting ? 0.9f : normalSidewaysFriction, Time.fixedDeltaTime * 8f);
+        wheelCollider.GetWorldPose(out position, out rotation);
 
-        wheelRL.sidewaysFriction = rlSideways;
-        wheelRR.sidewaysFriction = rrSideways;
-        wheelRL.forwardFriction = rlForward;
-        wheelRR.forwardFriction = rrForward;
-        wheelFL.sidewaysFriction = flSideways;
-        wheelFR.sidewaysFriction = frSideways;
+        wheelMesh.position = position;
+        wheelMesh.rotation = rotation;
     }
 
-    void CalculateLateralG()
-    {
-        Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
-        float targetLateralG = localVel.x / 9.81f;
-        lateralG = Mathf.Lerp(lateralG, targetLateralG, Time.fixedDeltaTime * 10f);
-    }
-
-    void UpdateWheelMeshes()
-    {
-        UpdateSingleWheel(wheelFL, meshFL, meshFLLocalRot);
-        UpdateSingleWheel(wheelFR, meshFR, meshFRLocalRot);
-        UpdateSingleWheel(wheelRL, meshRL, meshRLLocalRot);
-        UpdateSingleWheel(wheelRR, meshRR, meshRRLocalRot);
-    }
-
-    void UpdateSingleWheel(WheelCollider col, Transform mesh, Quaternion baseRot)
-    {
-        if (col == null || mesh == null) return;
-        col.GetWorldPose(out Vector3 pos, out Quaternion rot);
-        mesh.position = pos;
-        mesh.rotation = rot * baseRot;
-    }
-
-    void UpdateBodyVisual()
+    private void UpdateBodyVisual()
     {
         if (carVisual == null) return;
 
-        Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
+        Vector3 localVel = transform.InverseTransformDirection(CarRigidbody.linearVelocity);
+        float lateralG = localVel.x / 9.81f;
         float roll = -lateralG * bodyRollAmount;
-        float pitch = -localVel.z * bodyPitchAmount / 35f;
 
-        Quaternion target = visualStartRot * Quaternion.Euler(pitch, 0f, roll);
+        Quaternion target = visualStartRot * Quaternion.Euler(0f, 0f, roll);
         carVisual.localRotation = Quaternion.Slerp(
             carVisual.localRotation,
             target,
@@ -315,15 +264,17 @@ public class CarController : MonoBehaviour
         );
     }
 
-    void HandleBrakeLights()
+    private void HandleBrakeLights()
     {
-        bool braking = brakeInput > 0.1f || Input.GetKey(KeyCode.Space);
-        float targetIntensity = braking ? brakeLightIntensity : 0f;
+        if (brakeLights == null) return;
+
+        bool braking = verticalInput < -0.1f || isHandbraking;
+        float target = braking ? brakeLightIntensity : 0f;
 
         foreach (Light light in brakeLights)
         {
             if (light == null) continue;
-            light.intensity = Mathf.Lerp(light.intensity, targetIntensity, Time.deltaTime * 12f);
+            light.intensity = Mathf.Lerp(light.intensity, target, Time.deltaTime * 12f);
         }
     }
 }
