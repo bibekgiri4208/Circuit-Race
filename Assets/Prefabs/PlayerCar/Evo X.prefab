@@ -1059,6 +1059,10 @@ MonoBehaviour:
   steerSmoothSpeed: 6
   minSteerAngleAtHighSpeed: 10
   steeringSpeedForMinAngle: 30
+  counterSteerStrength: 1.2
+  counterSteerMinSpeed: 20
+  counterSteerAngleLimit: 25
+  counterSteerSmoothSpeed: 8
   downForce: 70
   centerOfMassOffset: {x: 0, y: -0.5, z: 0}
   carVisual: {fileID: 916866150531814341}

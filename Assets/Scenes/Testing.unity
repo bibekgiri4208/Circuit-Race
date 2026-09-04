@@ -351,6 +351,16 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &786464195 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 5558918578247824674, guid: ea6e8f564d39fe041bade11b6b76594f, type: 3}
+  m_PrefabInstance: {fileID: 3767298945952670180}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &786464196 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7549986271689479486, guid: ea6e8f564d39fe041bade11b6b76594f, type: 3}
+  m_PrefabInstance: {fileID: 3767298945952670180}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &885532262
 GameObject:
   m_ObjectHideFlags: 0
@@ -549,7 +559,7 @@ PrefabInstance:
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: target
       value: 
-      objectReference: {fileID: 1152945355}
+      objectReference: {fileID: 786464196}
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: offset.y
       value: 2
@@ -561,7 +571,7 @@ PrefabInstance:
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: targetRb
       value: 
-      objectReference: {fileID: 1152945354}
+      objectReference: {fileID: 786464195}
     - target: {fileID: 6841536935776698995, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
       propertyPath: lookHeight
       value: 1.2
@@ -623,16 +633,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b06cc37eab4101c499af27d430e91b6c, type: 3}
---- !u!54 &1152945354 stripped
-Rigidbody:
-  m_CorrespondingSourceObject: {fileID: 4342560386248442589, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
-  m_PrefabInstance: {fileID: 1797004093}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &1152945355 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8183137220687926130, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
-  m_PrefabInstance: {fileID: 1797004093}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1187779334
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -943,7 +943,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3789611207696627354, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4071438367746283832, guid: f0cc23725ab51244daeefc2dfe34d572, type: 3}
       propertyPath: highSpeedSteerLimit
@@ -1635,22 +1635,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfff27f9ee9ff6a4d90ea19f18243402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SimcadeCarController
-  wheelFL: {fileID: 6704100549689611096}
-  wheelFR: {fileID: 4188076343144915584}
-  wheelRL: {fileID: 3484935950472793181}
-  wheelRR: {fileID: 711856588559833963}
-  meshFL: {fileID: 3702092227802424028}
-  meshFR: {fileID: 1903095480555922471}
-  meshRL: {fileID: 2497324815051242398}
-  meshRR: {fileID: 83119852622958162}
-  centerOfMass: {fileID: 2792890694328211482}
-  fallbackCOM: {x: 0, y: -0.62, z: 0.12}
-  motorPower: 1500
-  brakePower: 3000
-  topSpeedKmh: 180
+  frontLeftCollider: {fileID: 0}
+  frontRightCollider: {fileID: 0}
+  rearLeftCollider: {fileID: 0}
+  rearRightCollider: {fileID: 0}
+  frontLeftMesh: {fileID: 0}
+  frontRightMesh: {fileID: 0}
+  rearLeftMesh: {fileID: 0}
+  rearRightMesh: {fileID: 0}
+  motorForce: 1500
+  brakeForce: 3000
   maxSteerAngle: 35
-  steerSpeed: 8
-  highSpeedSteerReduction: 0.4
+  handbrakeForce: 5000
+  maxForwardSpeed: 35
+  maxReverseSpeed: 12
+  boostForce: 9000
+  boostMaxSpeed: 55
+  steerSmoothSpeed: 6
+  minSteerAngleAtHighSpeed: 10
+  steeringSpeedForMinAngle: 30
+  counterSteerStrength: 1.2
+  counterSteerMinSpeed: 20
+  counterSteerAngleLimit: 25
+  counterSteerSmoothSpeed: 8
+  downForce: 80
+  centerOfMassOffset: {x: 0, y: -0.5, z: 0}
+  carVisual: {fileID: 0}
+  bodyRollAmount: 2
+  bodyRollSpeed: 4
   brakeLights:
   - {fileID: 6132700529556116526}
   - {fileID: 2516586622160392511}
@@ -2340,7 +2352,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2156347318531062290, guid: ea6e8f564d39fe041bade11b6b76594f, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7549986271689479486, guid: ea6e8f564d39fe041bade11b6b76594f, type: 3}
       propertyPath: m_LocalPosition.x
