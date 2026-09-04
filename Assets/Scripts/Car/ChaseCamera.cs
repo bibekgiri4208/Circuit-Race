@@ -14,6 +14,12 @@ public class ChaseCamera : MonoBehaviour
 
     [Header("Mouse Look")]
     public float mouseSensitivity = 0.15f;
+
+    [Header("Gamepad Look")]
+    public float gamepadSensitivity = 2f;
+    public float gamepadDeadzone = 0.15f;
+
+    [Header("Look Limits")]
     public float minPitch = -10f;
     public float maxPitch = 45f;
 
@@ -41,9 +47,22 @@ public class ChaseCamera : MonoBehaviour
 
     private void HandleMouseLook()
     {
-        if (Mouse.current == null) return;
+        Vector2 lookInput = Vector2.zero;
 
-        Vector2 lookInput = Mouse.current.delta.ReadValue() * mouseSensitivity;
+        if (Gamepad.current != null)
+        {
+            Vector2 rightStick = Gamepad.current.rightStick.ReadValue();
+
+            if (rightStick.magnitude > gamepadDeadzone)
+            {
+                lookInput = rightStick * gamepadSensitivity;
+            }
+        }
+
+        if (lookInput == Vector2.zero && Mouse.current != null)
+        {
+            lookInput = Mouse.current.delta.ReadValue() * mouseSensitivity;
+        }
 
         yaw += lookInput.x;
         pitch -= lookInput.y;
