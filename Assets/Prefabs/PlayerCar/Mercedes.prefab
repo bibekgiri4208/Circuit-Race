@@ -592,7 +592,7 @@ Transform:
   m_GameObject: {fileID: 1036525632886213394}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.747788, y: 0.481, z: -1.287}
+  m_LocalPosition: {x: 0.747788, y: 0.482, z: -1.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1002,7 +1002,7 @@ Transform:
   m_GameObject: {fileID: 2267996905588395773}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.747788, y: 0.481, z: -1.287}
+  m_LocalPosition: {x: -0.747788, y: 0.482, z: -1.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1017,7 +1017,7 @@ WheelCollider:
   m_GameObject: {fileID: 2267996905588395773}
   serializedVersion: 2
   m_Center: {x: 0, y: 0, z: 0}
-  m_Radius: 0.335
+  m_Radius: 0.337
   m_SuspensionSpring:
     spring: 35000
     damper: 4500
@@ -2857,139 +2857,18 @@ MonoBehaviour:
   meshRR: {fileID: 993552361706838947}
   centerOfMass: {fileID: 4145646156724431933}
   fallbackCOM: {x: 0, y: -0.65, z: 0.05}
-  maxMotorTorque: 3200
+  motorPower: 2200
+  brakePower: 2500
   topSpeedKmh: 180
-  powerCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0.6
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.3
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.7
-      value: 0.95
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 0.7
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  engineBraking: 400
-  launchRpmLimit: 0.85
   maxSteerAngle: 42
-  steerCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.4
-      value: 0.7
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.8
-      value: 0.4
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 0.25
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
   steerSpeed: 8
-  counterSteerSpeed: 12
-  counterSteerStrength: 0.6
-  brakeTorque: 6000
-  brakeBias: 0.6
-  idleBrakeTorque: 300
-  handbrakeTorque: 8000
-  downforce: 120
-  downforceCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.3
-      value: 0.5
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  frontGripMultiplier: 1
-  rearGripMultiplier: 1
-  speedGripReduction: 0.15
+  highSpeedSteerReduction: 0.4
+  driftMotorBoost: 1.3
+  driftBrakeRear: 0
+  driftSidewaysFriction: 0.6
+  normalSidewaysFriction: 1
+  driftForwardFriction: 0.8
+  normalForwardFriction: 1
   brakeLights: []
   brakeLightIntensity: 2.5
   carVisual: {fileID: 6935550012436749850}
