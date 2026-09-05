@@ -22,6 +22,20 @@ public class CarController : MonoBehaviour
     public float maxSteerAngle = 30f;
     public float handbrakeForce = 5000f;
 
+    [Header("All Wheel Drive")]
+    [Range(0f, 1f)] public float frontTorqueRatio = 0.4f;
+    [Range(0f, 1f)] public float rearTorqueRatio = 0.6f;
+    public bool frontWheelDrive = true;
+    public bool rearWheelDrive = true;
+
+    [Header("Drift Settings")]
+    public float driftAngleThreshold = 5f;
+    public float counterSteerSpeed = 8f;
+    public float driftBrakeForce = 800f;
+    public float handbrakeFrontBrakeForce = 500f;
+    public float driftAngularDamping = 0.01f;
+    public float gripReductionAtDrift = 0.6f;
+
     [Header("Speed Limit")]
     public float maxForwardSpeed = 35f;
     public float maxReverseSpeed = 12f;
@@ -53,6 +67,8 @@ public class CarController : MonoBehaviour
     private bool isHandbraking;
     private float currentSteerAngle;
     private Quaternion visualStartRot;
+    private float currentDriftAngle;
+    private float baseAngularDamping;
 
     public bool IsBoosting { get; private set; }
     public Rigidbody CarRigidbody { get; private set; }
@@ -61,7 +77,8 @@ public class CarController : MonoBehaviour
     public float ThrottleInput => verticalInput;
     public float EngineLoad => Mathf.Clamp01(Mathf.Abs(verticalInput));
     public bool IsHandbraking => isHandbraking;
-    public bool IsDrifting => false;
+    public bool IsDrifting { get; private set; }
+    public float DriftAngle => currentDriftAngle;
 
     private void Start()
     {
@@ -70,6 +87,8 @@ public class CarController : MonoBehaviour
         CarRigidbody.angularDamping = 0.05f;
         CarRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         CarRigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
+        baseAngularDamping = CarRigidbody.angularDamping;
 
         if (centerOfMassOffset != Vector3.zero)
         {
@@ -96,6 +115,7 @@ public class CarController : MonoBehaviour
         HandleBraking();
         HandleBoost();
         ApplyDownforce();
+        UpdateDriftState();
     }
 
     private void GetInput()
@@ -146,15 +166,26 @@ public class CarController : MonoBehaviour
 
         if (overForwardSpeed || overReverseSpeed)
         {
-            rearLeftCollider.motorTorque = 0f;
-            rearRightCollider.motorTorque = 0f;
+            SetAllMotorTorque(0f);
             return;
         }
 
         float torque = verticalInput * motorForce;
+        float frontTorque = frontWheelDrive ? torque * frontTorqueRatio : 0f;
+        float rearTorque = rearWheelDrive ? torque * rearTorqueRatio : 0f;
 
-        rearLeftCollider.motorTorque = torque;
-        rearRightCollider.motorTorque = torque;
+        frontLeftCollider.motorTorque = frontTorque;
+        frontRightCollider.motorTorque = frontTorque;
+        rearLeftCollider.motorTorque = rearTorque;
+        rearRightCollider.motorTorque = rearTorque;
+    }
+
+    private void SetAllMotorTorque(float torque)
+    {
+        frontLeftCollider.motorTorque = frontWheelDrive ? torque : 0f;
+        frontRightCollider.motorTorque = frontWheelDrive ? torque : 0f;
+        rearLeftCollider.motorTorque = rearWheelDrive ? torque : 0f;
+        rearRightCollider.motorTorque = rearWheelDrive ? torque : 0f;
     }
 
     private void HandleBoost()
@@ -183,10 +214,16 @@ public class CarController : MonoBehaviour
 
         float targetSteerAngle = horizontalInput * adjustedMaxSteerAngle;
 
+        if (IsDrifting && Mathf.Abs(currentDriftAngle) > driftAngleThreshold)
+        {
+            float counterSteer = -Mathf.Sign(currentDriftAngle) * adjustedMaxSteerAngle * 0.6f;
+            targetSteerAngle = Mathf.Lerp(targetSteerAngle, counterSteer, 0.5f);
+        }
+
         currentSteerAngle = Mathf.Lerp(
             currentSteerAngle,
             targetSteerAngle,
-            steerSmoothSpeed * Time.fixedDeltaTime
+            counterSteerSpeed * Time.fixedDeltaTime
         );
 
         frontLeftCollider.steerAngle = currentSteerAngle;
@@ -205,19 +242,55 @@ public class CarController : MonoBehaviour
         if (pressingReverse && movingForward)
         {
             currentBrakeForce = brakeForce;
-            rearLeftCollider.motorTorque = 0f;
-            rearRightCollider.motorTorque = 0f;
+            SetAllMotorTorque(0f);
         }
-
-        frontLeftCollider.brakeTorque = currentBrakeForce;
-        frontRightCollider.brakeTorque = currentBrakeForce;
-        rearLeftCollider.brakeTorque = currentBrakeForce;
-        rearRightCollider.brakeTorque = currentBrakeForce;
 
         if (isHandbraking)
         {
+            frontLeftCollider.brakeTorque = handbrakeFrontBrakeForce;
+            frontRightCollider.brakeTorque = handbrakeFrontBrakeForce;
             rearLeftCollider.brakeTorque = handbrakeForce;
             rearRightCollider.brakeTorque = handbrakeForce;
+        }
+        else
+        {
+            frontLeftCollider.brakeTorque = currentBrakeForce;
+            frontRightCollider.brakeTorque = currentBrakeForce;
+            rearLeftCollider.brakeTorque = currentBrakeForce;
+            rearRightCollider.brakeTorque = currentBrakeForce;
+        }
+    }
+
+    private void UpdateDriftState()
+    {
+        Vector3 localVel = transform.InverseTransformDirection(CarRigidbody.linearVelocity);
+        float lateralSpeed = localVel.x;
+        float forwardSpeed = localVel.z;
+
+        currentDriftAngle = 0f;
+        if (Mathf.Abs(forwardSpeed) > 2f)
+        {
+            currentDriftAngle = Mathf.Atan2(lateralSpeed, Mathf.Abs(forwardSpeed)) * Mathf.Rad2Deg;
+        }
+
+        float slipAngle = Mathf.Abs(currentDriftAngle);
+        IsDrifting = slipAngle > driftAngleThreshold && SpeedKmh > 15f;
+
+        if (IsDrifting)
+        {
+            CarRigidbody.angularDamping = Mathf.Lerp(
+                CarRigidbody.angularDamping,
+                driftAngularDamping,
+                Time.fixedDeltaTime * 5f
+            );
+        }
+        else
+        {
+            CarRigidbody.angularDamping = Mathf.Lerp(
+                CarRigidbody.angularDamping,
+                baseAngularDamping,
+                Time.fixedDeltaTime * 3f
+            );
         }
     }
 
