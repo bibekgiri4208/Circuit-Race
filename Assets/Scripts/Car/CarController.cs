@@ -20,21 +20,13 @@ public class CarController : MonoBehaviour
     public float motorForce = 1500f;
     public float brakeForce = 3000f;
     public float maxSteerAngle = 30f;
-    public float handbrakeForce = 5000f;
+    public float handbrakeForce = 3500f;
 
     [Header("All Wheel Drive")]
     [Range(0f, 1f)] public float frontTorqueRatio = 0.4f;
     [Range(0f, 1f)] public float rearTorqueRatio = 0.6f;
     public bool frontWheelDrive = true;
     public bool rearWheelDrive = true;
-
-    [Header("Drift Settings")]
-    public float driftAngleThreshold = 5f;
-    public float counterSteerSpeed = 8f;
-    public float driftBrakeForce = 800f;
-    public float handbrakeFrontBrakeForce = 500f;
-    public float driftAngularDamping = 0.01f;
-    public float gripReductionAtDrift = 0.6f;
 
     [Header("Speed Limit")]
     public float maxForwardSpeed = 35f;
@@ -44,14 +36,22 @@ public class CarController : MonoBehaviour
     public float boostForce = 9000f;
     public float boostMaxSpeed = 55f;
 
-    [Header("Steering Assist")]
-    public float steerSmoothSpeed = 6f;
-    public float minSteerAngleAtHighSpeed = 10f;
+    [Header("Steering")]
+    public float steerSmoothSpeed = 8f;
+    public float minSteerAngleAtHighSpeed = 4f;
     public float steeringSpeedForMinAngle = 30f;
+    public float steerExponent = 2f;
 
     [Header("Stability")]
-    public float downForce = 80f;
+    public float downForce = 120f;
     public Vector3 centerOfMassOffset = new Vector3(0f, -0.5f, 0f);
+    public float lateralCorrectionForce = 4000f;
+    public float maxTiltAngle = 6f;
+    public float tiltCorrectionForce = 150f;
+
+    [Header("Wheel Friction")]
+    public float rearSidewaysStiffness = 1.8f;
+    public float frontSidewaysStiffness = 1.0f;
 
     [Header("Body Visual")]
     public Transform carVisual;
@@ -67,28 +67,21 @@ public class CarController : MonoBehaviour
     private bool isHandbraking;
     private float currentSteerAngle;
     private Quaternion visualStartRot;
-    private float currentDriftAngle;
-    private float baseAngularDamping;
 
     public bool IsBoosting { get; private set; }
     public Rigidbody CarRigidbody { get; private set; }
-
     public float SpeedKmh { get; private set; }
     public float ThrottleInput => verticalInput;
     public float EngineLoad => Mathf.Clamp01(Mathf.Abs(verticalInput));
     public bool IsHandbraking => isHandbraking;
-    public bool IsDrifting { get; private set; }
-    public float DriftAngle => currentDriftAngle;
 
     private void Start()
     {
         CarRigidbody = GetComponent<Rigidbody>();
         CarRigidbody.mass = 1300f;
-        CarRigidbody.angularDamping = 0.05f;
+        CarRigidbody.angularDamping = 0.5f;
         CarRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         CarRigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
-
-        baseAngularDamping = CarRigidbody.angularDamping;
 
         if (centerOfMassOffset != Vector3.zero)
         {
@@ -96,6 +89,24 @@ public class CarController : MonoBehaviour
         }
 
         visualStartRot = carVisual != null ? carVisual.localRotation : Quaternion.identity;
+
+        ApplyWheelFriction();
+    }
+
+    private void ApplyWheelFriction()
+    {
+        SetSidewaysFriction(frontLeftCollider, frontSidewaysStiffness);
+        SetSidewaysFriction(frontRightCollider, frontSidewaysStiffness);
+        SetSidewaysFriction(rearLeftCollider, rearSidewaysStiffness);
+        SetSidewaysFriction(rearRightCollider, rearSidewaysStiffness);
+    }
+
+    private void SetSidewaysFriction(WheelCollider wheel, float stiffness)
+    {
+        if (wheel == null) return;
+        WheelFrictionCurve curve = wheel.sidewaysFriction;
+        curve.stiffness = stiffness;
+        wheel.sidewaysFriction = curve;
     }
 
     private void Update()
@@ -115,7 +126,8 @@ public class CarController : MonoBehaviour
         HandleBraking();
         HandleBoost();
         ApplyDownforce();
-        UpdateDriftState();
+        ApplyLateralCorrection();
+        ClampTilt();
     }
 
     private void GetInput()
@@ -170,7 +182,10 @@ public class CarController : MonoBehaviour
             return;
         }
 
-        float torque = verticalInput * motorForce;
+        float steerFraction = Mathf.Abs(currentSteerAngle) / maxSteerAngle;
+        float torqueMultiplier = 1f - steerFraction * 0.35f;
+
+        float torque = verticalInput * motorForce * torqueMultiplier;
         float frontTorque = frontWheelDrive ? torque * frontTorqueRatio : 0f;
         float rearTorque = rearWheelDrive ? torque * rearTorqueRatio : 0f;
 
@@ -206,24 +221,19 @@ public class CarController : MonoBehaviour
         float speed = CarRigidbody.linearVelocity.magnitude;
         float speedPercent = Mathf.Clamp01(speed / steeringSpeedForMinAngle);
 
+        float speedReduction = Mathf.Pow(speedPercent, steerExponent);
         float adjustedMaxSteerAngle = Mathf.Lerp(
             maxSteerAngle,
             minSteerAngleAtHighSpeed,
-            speedPercent
+            speedReduction
         );
 
         float targetSteerAngle = horizontalInput * adjustedMaxSteerAngle;
 
-        if (IsDrifting && Mathf.Abs(currentDriftAngle) > driftAngleThreshold)
-        {
-            float counterSteer = -Mathf.Sign(currentDriftAngle) * adjustedMaxSteerAngle * 0.6f;
-            targetSteerAngle = Mathf.Lerp(targetSteerAngle, counterSteer, 0.5f);
-        }
-
         currentSteerAngle = Mathf.Lerp(
             currentSteerAngle,
             targetSteerAngle,
-            counterSteerSpeed * Time.fixedDeltaTime
+            steerSmoothSpeed * Time.fixedDeltaTime
         );
 
         frontLeftCollider.steerAngle = currentSteerAngle;
@@ -247,8 +257,8 @@ public class CarController : MonoBehaviour
 
         if (isHandbraking)
         {
-            frontLeftCollider.brakeTorque = handbrakeFrontBrakeForce;
-            frontRightCollider.brakeTorque = handbrakeFrontBrakeForce;
+            frontLeftCollider.brakeTorque = brakeForce * 0.2f;
+            frontRightCollider.brakeTorque = brakeForce * 0.2f;
             rearLeftCollider.brakeTorque = handbrakeForce;
             rearRightCollider.brakeTorque = handbrakeForce;
         }
@@ -261,43 +271,47 @@ public class CarController : MonoBehaviour
         }
     }
 
-    private void UpdateDriftState()
-    {
-        Vector3 localVel = transform.InverseTransformDirection(CarRigidbody.linearVelocity);
-        float lateralSpeed = localVel.x;
-        float forwardSpeed = localVel.z;
-
-        currentDriftAngle = 0f;
-        if (Mathf.Abs(forwardSpeed) > 2f)
-        {
-            currentDriftAngle = Mathf.Atan2(lateralSpeed, Mathf.Abs(forwardSpeed)) * Mathf.Rad2Deg;
-        }
-
-        float slipAngle = Mathf.Abs(currentDriftAngle);
-        IsDrifting = slipAngle > driftAngleThreshold && SpeedKmh > 15f;
-
-        if (IsDrifting)
-        {
-            CarRigidbody.angularDamping = Mathf.Lerp(
-                CarRigidbody.angularDamping,
-                driftAngularDamping,
-                Time.fixedDeltaTime * 5f
-            );
-        }
-        else
-        {
-            CarRigidbody.angularDamping = Mathf.Lerp(
-                CarRigidbody.angularDamping,
-                baseAngularDamping,
-                Time.fixedDeltaTime * 3f
-            );
-        }
-    }
-
     private void ApplyDownforce()
     {
         float speed = CarRigidbody.linearVelocity.magnitude;
         CarRigidbody.AddForce(-transform.up * downForce * speed);
+    }
+
+    private void ApplyLateralCorrection()
+    {
+        Vector3 localVel = transform.InverseTransformDirection(CarRigidbody.linearVelocity);
+        float lateralSpeed = localVel.x;
+        float forwardSpeed = Mathf.Abs(localVel.z);
+
+        if (forwardSpeed < 1f) return;
+
+        float speedFactor = Mathf.Clamp01(SpeedKmh / maxForwardSpeed);
+        float correction = -lateralSpeed * lateralCorrectionForce * speedFactor;
+        CarRigidbody.AddForce(transform.right * correction * Time.fixedDeltaTime, ForceMode.Acceleration);
+    }
+
+    private void ClampTilt()
+    {
+        Vector3 currentEuler = transform.eulerAngles;
+        float pitch = NormalizeAngle(currentEuler.x);
+        float roll = NormalizeAngle(currentEuler.z);
+
+        if (Mathf.Abs(pitch) > maxTiltAngle || Mathf.Abs(roll) > maxTiltAngle)
+        {
+            float correctionPitch = pitch > maxTiltAngle ? pitch - maxTiltAngle : (pitch < -maxTiltAngle ? pitch + maxTiltAngle : 0f);
+            float correctionRoll = roll > maxTiltAngle ? roll - maxTiltAngle : (roll < -maxTiltAngle ? roll + maxTiltAngle : 0f);
+
+            Vector3 correctionTorque = transform.right * -correctionPitch * tiltCorrectionForce
+                                     + transform.forward * -correctionRoll * tiltCorrectionForce;
+            CarRigidbody.AddTorque(correctionTorque * Time.fixedDeltaTime, ForceMode.Force);
+        }
+    }
+
+    private float NormalizeAngle(float angle)
+    {
+        while (angle > 180f) angle -= 360f;
+        while (angle < -180f) angle += 360f;
+        return angle;
     }
 
     private void UpdateWheelMeshes()
@@ -325,9 +339,15 @@ public class CarController : MonoBehaviour
     {
         if (carVisual == null) return;
 
+        if (bodyRollAmount <= 0f)
+        {
+            carVisual.localRotation = Quaternion.Slerp(carVisual.localRotation, visualStartRot, Time.deltaTime * bodyRollSpeed);
+            return;
+        }
+
         Vector3 localVel = transform.InverseTransformDirection(CarRigidbody.linearVelocity);
         float lateralG = localVel.x / 9.81f;
-        float roll = -lateralG * bodyRollAmount;
+        float roll = Mathf.Clamp(-lateralG * bodyRollAmount, -12f, 12f);
 
         Quaternion target = visualStartRot * Quaternion.Euler(0f, 0f, roll);
         carVisual.localRotation = Quaternion.Slerp(
