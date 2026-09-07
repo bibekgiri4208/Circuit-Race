@@ -60,9 +60,6 @@ public class TireSmokeController : MonoBehaviour
         // Pushing too hard into a corner / Understeer / Oversteer slide (All wheels)
         bool lateralSlide = car.SpeedKmh > skidMinSpeed && sidewaysSpeed > lateralSlideThreshold;
 
-        // Drift smoke
-        bool drifting = car.IsDrifting;
-
         // 3. Assign rates dynamically based on racing events
         float frontRate = 0f;
         float rearRate = 0f;
@@ -71,12 +68,10 @@ public class TireSmokeController : MonoBehaviour
         if (rearWheelspin) rearRate = Mathf.Max(rearRate, launchSmokeRate);
         if (brakeLockup) rearRate = Mathf.Max(rearRate, brakeSkidSmokeRate);
         if (lateralSlide) rearRate = Mathf.Max(rearRate, corneringSmokeRate);
-        if (drifting) rearRate = Mathf.Max(rearRate, driftSmokeRate);
 
         // Handle Front Wheels (Grip loss from heavy braking or severe understeer cornering)
         if (brakeLockup) frontRate = Mathf.Max(frontRate, brakeSkidSmokeRate);
         if (lateralSlide) frontRate = Mathf.Max(frontRate, corneringSmokeRate);
-        if (drifting) frontRate = Mathf.Max(frontRate, driftSmokeRate * 0.6f);
 
         // 4. Apply to Particle Systems
         SetSmoke(frontLeftSmoke, frontRate);
