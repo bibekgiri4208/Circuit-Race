@@ -20,7 +20,7 @@ public class CarAudio : MonoBehaviour
     public float maxVolume = 0.95f;
 
     [Header("Gear System")]
-    public float[] gearSpeeds = { 30f, 60f, 90f, 125f, 160f, 190f };
+    public float[] gearSpeeds = { 20f, 40f, 65f, 90f, 112f, 126f };
     public float rpmDropAmount = 0.45f;
     public float rpmDropRecoverySpeed = 4f;
     public float shiftCooldown = 0.35f;
