@@ -112,12 +112,7 @@ public class ChaseCamera : MonoBehaviour
 
         Vector3 lookPoint = target.position + Vector3.up * lookHeight;
 
-        float tiltAngle = 0f;
-        if (carController != null && carController.IsDrifting)
-        {
-            tiltAngle = Mathf.Clamp(-carController.DriftAngle, -maxDriftTilt, maxDriftTilt);
-        }
-        currentTilt = Mathf.Lerp(currentTilt, tiltAngle, tiltSmoothing * Time.deltaTime);
+        currentTilt = Mathf.Lerp(currentTilt, 0f, tiltSmoothing * Time.deltaTime);
 
         Quaternion lookRot = Quaternion.LookRotation(lookPoint - transform.position);
         transform.rotation = Quaternion.Euler(lookRot.eulerAngles.x, lookRot.eulerAngles.y, currentTilt);
