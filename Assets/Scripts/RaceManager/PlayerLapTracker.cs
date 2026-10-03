@@ -1,105 +1,107 @@
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
 public class PlayerLapTracker : MonoBehaviour
 {
     [Header("Lap Settings")]
-    public int totalLaps = 3;
-    public int totalCheckpoints = 3;
+    [Min(1)] public int totalLaps = 3;
+    [Min(0)] public int totalCheckpoints = 3;
 
     [Header("Current Progress")]
     public int currentLap = 1;
-    public int nextCheckpointIndex = 0;
+    public int nextCheckpointIndex;
 
     [Header("UI")]
     public TextMeshProUGUI lapText;
     public TextMeshProUGUI checkpointText;
 
-    private bool raceCompleted = false;
+    private readonly List<float> lapTimes = new List<float>();
+    private float lastLapFinishTime;
+    private bool raceCompleted;
 
-    private void Start()
+    public bool IsPlayer => GetComponent<CarController>() != null;
+    public bool RaceCompleted => raceCompleted;
+    public int FinishPosition { get; internal set; }
+    public float FinishTime { get; private set; }
+    public float BestLapTime { get; private set; }
+    public float CurrentLapTime => RaceManager.Instance != null ? RaceManager.Instance.RaceTime - lastLapFinishTime : 0f;
+    public IReadOnlyList<float> LapTimes => lapTimes;
+
+    void Start()
     {
-        UpdateUI();
+        RefreshUI();
+    }
+
+    public void ResetProgress(int laps, int checkpoints)
+    {
+        totalLaps = Mathf.Max(1, laps);
+        totalCheckpoints = Mathf.Max(0, checkpoints);
+        currentLap = 1;
+        nextCheckpointIndex = FinishPosition = 0;
+        FinishTime = BestLapTime = lastLapFinishTime = 0f;
+        raceCompleted = false;
+        lapTimes.Clear();
+        RefreshUI();
     }
 
     public void PassCheckpoint(int checkpointIndex)
     {
-        if (raceCompleted)
+        if (!CanRecordProgress() || checkpointIndex != nextCheckpointIndex || checkpointIndex >= totalCheckpoints)
             return;
-
-        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
-            return;
-
-        if (checkpointIndex == nextCheckpointIndex)
-        {
-            nextCheckpointIndex++;
-
-            Debug.Log("Checkpoint passed: " + checkpointIndex);
-
-            UpdateUI();
-        }
-        else
-        {
-            Debug.Log("Wrong checkpoint. Expected: " + nextCheckpointIndex + " but got: " + checkpointIndex);
-        }
+        nextCheckpointIndex++;
+        RefreshUI();
     }
 
     public void CrossFinishLine()
     {
-        if (raceCompleted)
-            return;
-
-        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
-            return;
-
+        if (!CanRecordProgress()) return;
         if (nextCheckpointIndex < totalCheckpoints)
         {
-            Debug.Log("Finish line crossed too early. Missing checkpoints.");
+            if (IsPlayer) RaceManager.Instance.ShowRaceMessage("PASS CHECKPOINT " + (nextCheckpointIndex + 1) + " / " + totalCheckpoints);
+            return;
+        }
+        float elapsed = RaceManager.Instance.RaceTime;
+        float lapTime = elapsed - lastLapFinishTime;
+        // Ignore the starting grid crossing on tracks with no checkpoint route.
+        if (totalCheckpoints == 0 && lapTime < 5f)
+        {
+            if (IsPlayer) RaceManager.Instance.ShowRaceMessage("RACE STARTED - COMPLETE THE COURSE");
             return;
         }
 
-        // Player completed all checkpoints of this lap
+        lapTimes.Add(lapTime);
+        BestLapTime = BestLapTime <= 0f ? lapTime : Mathf.Min(BestLapTime, lapTime);
+        lastLapFinishTime = elapsed;
         nextCheckpointIndex = 0;
 
-        // If this was the final lap, finish the race immediately
         if (currentLap >= totalLaps)
         {
-            FinishRace();
-            return;
+            raceCompleted = true;
+            FinishTime = elapsed;
+            RaceManager.Instance.RegisterFinish(this);
         }
-
-        // Otherwise move to next lap
-        currentLap++;
-
-        Debug.Log("Lap completed. Current lap: " + currentLap);
-
-        UpdateUI();
-    }
-
-    private void FinishRace()
-    {
-        raceCompleted = true;
-
-        Debug.Log("Race Finished!");
-
-        if (RaceManager.Instance != null)
+        else
         {
-            RaceManager.Instance.StartFinishSequence();
+            currentLap++;
+            if (IsPlayer) RaceManager.Instance.ShowRaceMessage("LAP " + currentLap + " / " + totalLaps +
+                (currentLap == totalLaps ? " - FINAL LAP" : ""));
         }
-
-        if (lapText != null)
-            lapText.text = "FINISHED";
-
-        if (checkpointText != null)
-            checkpointText.text = "Race Complete";
+        RefreshUI();
     }
 
-    private void UpdateUI()
+    bool CanRecordProgress()
     {
-        if (lapText != null)
-            lapText.text = "Lap: " + currentLap + " / " + totalLaps;
+        return !raceCompleted && RaceManager.Instance != null &&
+            RaceManager.Instance.raceStarted && !RaceManager.Instance.raceFinished;
+    }
 
+    public void RefreshUI()
+    {
+        if (!IsPlayer) return;
+        if (lapText != null)
+            lapText.text = raceCompleted ? "FINISHED" : "LAP " + currentLap + " / " + totalLaps;
         if (checkpointText != null)
-            checkpointText.text = "Checkpoint: " + nextCheckpointIndex + " / " + totalCheckpoints;
+            checkpointText.text = raceCompleted ? "Race complete" : "CHECKPOINT " + nextCheckpointIndex + " / " + totalCheckpoints;
     }
 }

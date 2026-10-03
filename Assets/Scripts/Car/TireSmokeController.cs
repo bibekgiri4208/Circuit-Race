@@ -51,14 +51,14 @@ public class TireSmokeController : MonoBehaviour
         // 2. Check for Racing Smoke Conditions
 
         // Wheelspin on launch (Rear wheels)
-        bool rearWheelspin = car.ThrottleInput > launchThrottleThreshold && car.SpeedKmh < launchSmokeMaxSpeed;
+        bool rearWheelspin = car.IsGrounded && car.ThrottleInput > launchThrottleThreshold && car.SpeedKmh < launchSmokeMaxSpeed;
 
         // Heavy braking lockup (All wheels)
-        bool brakeLockup = car.SpeedKmh > skidMinSpeed && (car.IsHandbraking || car.GetComponent<CarController>().EngineLoad > brakeSkidThreshold && Input.GetKey(KeyCode.S));
-        // Note: Checking if brake input is high via generalized conditions
+        bool brakeLockup = car.IsGrounded && car.SpeedKmh > skidMinSpeed &&
+            (car.IsHandbraking || car.BrakeInput > brakeSkidThreshold);
 
         // Pushing too hard into a corner / Understeer / Oversteer slide (All wheels)
-        bool lateralSlide = car.SpeedKmh > skidMinSpeed && sidewaysSpeed > lateralSlideThreshold;
+        bool lateralSlide = car.IsGrounded && car.SpeedKmh > skidMinSpeed && sidewaysSpeed > lateralSlideThreshold;
 
         // 3. Assign rates dynamically based on racing events
         float frontRate = 0f;

@@ -37,6 +37,9 @@ public class CarSpawner : MonoBehaviour
 
         Rigidbody rb = SpawnedCar.GetComponent<Rigidbody>();
 
+        if (RaceManager.Instance != null)
+            RaceManager.Instance.RegisterRacer(SpawnedCar);
+
         if (cameraScript != null)
         {
             cameraScript.target = SpawnedCar.transform;

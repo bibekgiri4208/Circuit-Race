@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using TMPro;
 
 public class CarSelection : MonoBehaviour
@@ -23,6 +25,12 @@ public class CarSelection : MonoBehaviour
     [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject trackSelectionPanel;
 
+    [Header("UI Navigation")]
+    [SerializeField] private Button mainMenuDefaultButton;
+    [SerializeField] private Button trackSelectionDefaultButton;
+
+    private MenuNavigation menuNavigation;
+
     int currentCarIndex;
 
     void Awake()
@@ -40,6 +48,36 @@ public class CarSelection : MonoBehaviour
     void Start()
     {
         ShowCar(currentCarIndex);
+
+        Canvas canvas = mainMenuPanel != null ? mainMenuPanel.GetComponentInParent<Canvas>() : null;
+        if (canvas != null)
+        {
+            menuNavigation = canvas.GetComponent<MenuNavigation>();
+            if (menuNavigation == null)
+                menuNavigation = canvas.gameObject.AddComponent<MenuNavigation>();
+            menuNavigation.Initialize(canvas.gameObject, mainMenuDefaultButton);
+            menuNavigation.Focus();
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    void Update()
+    {
+        Gamepad gamepad = Gamepad.current;
+        if (gamepad != null && mainMenuPanel != null && mainMenuPanel.activeInHierarchy)
+        {
+            if (gamepad.leftShoulder.wasPressedThisFrame)
+                PreviousCar();
+            else if (gamepad.rightShoulder.wasPressedThisFrame)
+                NextCar();
+        }
+
+        bool backPressed = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+            (gamepad != null && gamepad.buttonEast.wasPressedThisFrame);
+        if (backPressed && trackSelectionPanel != null && trackSelectionPanel.activeInHierarchy)
+            BackToMainMenu();
     }
 
     public void NextCar()
@@ -110,6 +148,7 @@ public class CarSelection : MonoBehaviour
         // Switch panels: Hide main menu, show track choices
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
         if (trackSelectionPanel != null) trackSelectionPanel.SetActive(true);
+        if (menuNavigation != null) menuNavigation.Focus(trackSelectionDefaultButton);
     }
 
     // Call this from the "Back" button in the track panel
@@ -118,6 +157,7 @@ public class CarSelection : MonoBehaviour
         // Switch panels back
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
         if (trackSelectionPanel != null) trackSelectionPanel.SetActive(false);
+        if (menuNavigation != null) menuNavigation.Focus(mainMenuDefaultButton);
     }
 
     // Track Selection Button Functions

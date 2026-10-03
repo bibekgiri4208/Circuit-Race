@@ -1981,6 +1981,8 @@ MonoBehaviour:
   raceStarted: 0
   raceFinished: 0
   playerPosition: 0
+  totalLaps: 1
+  createCheckpointsFromAIPath: 0
   startDelay: 0.75
   numberStayTime: 0.55
   numberAnimTime: 0.2

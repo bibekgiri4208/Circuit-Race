@@ -10540,17 +10540,17 @@ MonoBehaviour:
   frontRightMesh: {fileID: 7445386931318427241}
   rearLeftMesh: {fileID: 6900478345221587159}
   rearRightMesh: {fileID: 87382863714727847}
-  motorForce: 1500
-  brakeForce: 3000
+  motorForce: 3500
+  brakeForce: 4500
   maxSteerAngle: 42
   handbrakeForce: 5000
-  maxForwardSpeed: 35
-  maxReverseSpeed: 12
+  maxForwardSpeed: 50
+  maxReverseSpeed: 10
   boostForce: 9000
-  boostMaxSpeed: 55
-  steerSmoothSpeed: 6
-  minSteerAngleAtHighSpeed: 10
-  steeringSpeedForMinAngle: 30
+  boostMaxSpeed: 65
+  steerSmoothSpeed: 10
+  minSteerAngleAtHighSpeed: 8
+  steeringSpeedForMinAngle: 45
   downForce: 80
   centerOfMassOffset: {x: 0, y: -0.5, z: 0}
   brakeLights:

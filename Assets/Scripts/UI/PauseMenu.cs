@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class PauseMenu : MonoBehaviour
@@ -9,17 +11,26 @@ public class PauseMenu : MonoBehaviour
     private GameObject pausePanel;
     private bool isPaused;
     private bool cursorLocked;
+    private Button resumeButton;
+    private MenuNavigation menuNavigation;
 
     void Start()
     {
         CreateUI();
         Time.timeScale = 1f;
+        AudioListener.pause = false;
         LockCursor();
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (RaceManager.Instance != null && RaceManager.Instance.raceFinished) return;
+        bool pausePressed = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+            (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
+        bool cancelPressed = isPaused && Gamepad.current != null &&
+            Gamepad.current.buttonEast.wasPressedThisFrame;
+
+        if (pausePressed || cancelPressed)
         {
             if (isPaused)
                 Resume();
@@ -27,7 +38,7 @@ public class PauseMenu : MonoBehaviour
                 Pause();
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftAlt))
+        if (!isPaused && Keyboard.current != null && Keyboard.current.leftAltKey.wasPressedThisFrame)
         {
             if (cursorLocked)
                 UnlockCursor();
@@ -39,6 +50,7 @@ public class PauseMenu : MonoBehaviour
     void CreateUI()
     {
         GameObject canvasGO = new GameObject("PauseCanvas");
+        canvasGO.transform.SetParent(transform, false);
         Canvas canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
@@ -50,6 +62,10 @@ public class PauseMenu : MonoBehaviour
             new Vector2(0, 1), new Vector2(0, 1), new Vector2(50, -50),
             new Vector2(60, 60), 32, new Color(0f, 0f, 0f, 0.5f));
         pauseButtonObj.GetComponent<Button>().onClick.AddListener(Pause);
+        Navigation pauseNavigation = pauseButtonObj.GetComponent<Button>().navigation;
+        pauseNavigation.mode = Navigation.Mode.None;
+        pauseButtonObj.GetComponent<Button>().navigation = pauseNavigation;
+        pauseButtonObj.AddComponent<UIButtonFeedback>();
 
         // --- Pause Panel (dark overlay + menu) ---
         pausePanel = new GameObject("PausePanel");
@@ -77,6 +93,7 @@ public class PauseMenu : MonoBehaviour
         GameObject resumeBtn = CreateMenuButton(menuBox.transform, "ResumeBtn", "RESUME",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 50));
         resumeBtn.GetComponent<Button>().onClick.AddListener(Resume);
+        resumeButton = resumeBtn.GetComponent<Button>();
 
         // Restart button
         GameObject restartBtn = CreateMenuButton(menuBox.transform, "RestartBtn", "RESTART",
@@ -87,40 +104,90 @@ public class PauseMenu : MonoBehaviour
         GameObject quitBtn = CreateMenuButton(menuBox.transform, "QuitBtn", "QUIT",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -90));
         quitBtn.GetComponent<Button>().onClick.AddListener(Quit);
+
+        Button restartButton = restartBtn.GetComponent<Button>();
+        Button quitButton = quitBtn.GetComponent<Button>();
+        SetMenuNavigation(resumeButton, quitButton, restartButton);
+        SetMenuNavigation(restartButton, resumeButton, quitButton);
+        SetMenuNavigation(quitButton, restartButton, resumeButton);
+
+        menuNavigation = canvasGO.AddComponent<MenuNavigation>();
+        menuNavigation.Initialize(pausePanel, resumeButton);
+        menuNavigation.enabled = false;
+    }
+
+    void SetMenuNavigation(Button button, Button up, Button down)
+    {
+        Navigation navigation = button.navigation;
+        navigation.mode = Navigation.Mode.Explicit;
+        navigation.selectOnUp = up;
+        navigation.selectOnDown = down;
+        button.navigation = navigation;
     }
 
     public void Pause()
     {
+        if (RaceManager.Instance != null && RaceManager.Instance.raceFinished) return;
+        if (isPaused) return;
         isPaused = true;
         Time.timeScale = 0f;
         AudioListener.pause = true;
         pausePanel.SetActive(true);
         pauseButtonObj.SetActive(false);
         UnlockCursor();
+        menuNavigation.enabled = true;
+        menuNavigation.Focus(resumeButton);
     }
 
     public void Resume()
     {
+        if (!isPaused) return;
         isPaused = false;
         Time.timeScale = 1f;
         AudioListener.pause = false;
+        menuNavigation.enabled = false;
+        ClearMenuSelection();
         pausePanel.SetActive(false);
         pauseButtonObj.SetActive(true);
         LockCursor();
     }
 
+    public void CloseForRaceFinish()
+    {
+        isPaused = false;
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+        if (menuNavigation != null) menuNavigation.enabled = false;
+        if (pausePanel != null)
+        {
+            ClearMenuSelection();
+            pausePanel.SetActive(false);
+        }
+        if (pauseButtonObj != null) pauseButtonObj.SetActive(false);
+    }
+
     public void Restart()
     {
+        ClearMenuSelection();
         Time.timeScale = 1f;
         AudioListener.pause = false;
         LoadingScreen.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    public     void Quit()
+    public void Quit()
     {
+        ClearMenuSelection();
         Time.timeScale = 1f;
         AudioListener.pause = false;
         LoadingScreen.LoadScene("Garage");
+    }
+
+    void ClearMenuSelection()
+    {
+        if (EventSystem.current == null) return;
+        GameObject selected = EventSystem.current.currentSelectedGameObject;
+        if (selected != null && selected.transform.IsChildOf(pausePanel.transform))
+            EventSystem.current.SetSelectedGameObject(null);
     }
 
     void LockCursor()
@@ -154,6 +221,7 @@ public class PauseMenu : MonoBehaviour
         Button btn = btnGO.AddComponent<Button>();
         ColorBlock cb = btn.colors;
         cb.highlightedColor = new Color(bgColor.r, bgColor.g, bgColor.b, 0.7f);
+        cb.selectedColor = cb.highlightedColor;
         cb.pressedColor = new Color(bgColor.r, bgColor.g, bgColor.b, 0.4f);
         btn.colors = cb;
 
@@ -227,6 +295,7 @@ public class PauseMenu : MonoBehaviour
         ColorBlock cb = btn.colors;
         cb.normalColor = new Color(0.85f, 0.15f, 0.1f, 1f);
         cb.highlightedColor = new Color(1f, 0.25f, 0.2f, 1f);
+        cb.selectedColor = cb.highlightedColor;
         cb.pressedColor = new Color(0.65f, 0.1f, 0.08f, 1f);
         btn.colors = cb;
 

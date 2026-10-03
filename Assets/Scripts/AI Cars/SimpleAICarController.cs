@@ -45,10 +45,15 @@ public class SimpleAICarController : MonoBehaviour
 
     bool obstacleAhead;
     float avoidanceSteer;
+    RigidbodyConstraints originalConstraints;
+    bool gridLocked;
+    PlayerLapTracker lapTracker;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        originalConstraints = rb.constraints;
+        lapTracker = GetComponent<PlayerLapTracker>();
 
         rb.mass = 1200f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -62,15 +67,34 @@ public class SimpleAICarController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (waypoints == null || waypoints.Length == 0)
-            return;
-
         if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
         {
+            if (!gridLocked)
+            {
+                gridLocked = true;
+                rb.constraints = originalConstraints | RigidbodyConstraints.FreezePositionX |
+                    RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
+            }
             SetMotorTorque(0f);
-            SetBrakeTorque(300f);
+            SetBrakeTorque(brakeTorque);
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+            rb.angularVelocity = Vector3.zero;
             return;
         }
+
+        if (gridLocked)
+        {
+            rb.constraints = originalConstraints;
+            gridLocked = false;
+        }
+        if ((RaceManager.Instance != null && RaceManager.Instance.raceFinished) ||
+            (lapTracker != null && lapTracker.RaceCompleted))
+        {
+            SetMotorTorque(0f);
+            SetBrakeTorque(brakeTorque);
+            return;
+        }
+        if (waypoints == null || waypoints.Length == 0) return;
 
         HandleWaypoint();
         HandleSensors();
