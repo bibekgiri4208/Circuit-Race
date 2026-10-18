@@ -24,7 +24,6 @@ public class PauseMenu : MonoBehaviour
 
     void Update()
     {
-        if (RaceManager.Instance != null && RaceManager.Instance.raceFinished) return;
         bool pausePressed = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
             (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
         bool cancelPressed = isPaused && Gamepad.current != null &&
@@ -127,7 +126,6 @@ public class PauseMenu : MonoBehaviour
 
     public void Pause()
     {
-        if (RaceManager.Instance != null && RaceManager.Instance.raceFinished) return;
         if (isPaused) return;
         isPaused = true;
         Time.timeScale = 0f;
@@ -152,26 +150,12 @@ public class PauseMenu : MonoBehaviour
         LockCursor();
     }
 
-    public void CloseForRaceFinish()
-    {
-        isPaused = false;
-        Time.timeScale = 1f;
-        AudioListener.pause = false;
-        if (menuNavigation != null) menuNavigation.enabled = false;
-        if (pausePanel != null)
-        {
-            ClearMenuSelection();
-            pausePanel.SetActive(false);
-        }
-        if (pauseButtonObj != null) pauseButtonObj.SetActive(false);
-    }
-
     public void Restart()
     {
         ClearMenuSelection();
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        LoadingScreen.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadSceneAsync(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void Quit()
@@ -179,7 +163,7 @@ public class PauseMenu : MonoBehaviour
         ClearMenuSelection();
         Time.timeScale = 1f;
         AudioListener.pause = false;
-        LoadingScreen.LoadScene("Garage");
+        SceneManager.LoadSceneAsync("Garage");
     }
 
     void ClearMenuSelection()

@@ -81,8 +81,6 @@ public class CarController : MonoBehaviour
     public float brakeLightIntensity = 2.5f;
 
     private WheelCollider[] wheels;
-    private RigidbodyConstraints originalConstraints;
-    private bool gridLocked;
     private bool controlsEnabled = true;
     private float steeringInput;
     private float acceleratorInput;
@@ -97,26 +95,17 @@ public class CarController : MonoBehaviour
     private int groundedWheels;
     private Vector3 groundNormal = Vector3.up;
     private Quaternion visualStartRotation;
-    private PlayerLapTracker lapTracker;
     private Vector3 recoveryPosition;
     private Quaternion recoveryRotation;
     private float nextRecoveryTime;
     private float upsideDownTime;
-    private float driftPoints;
-    private float driftDuration;
-    private float driftGraceTime;
 
     public bool IsHandbraking { get; private set; }
     public float DriftAngle { get; private set; }
     public bool IsDrifting => IsGrounded && forwardSpeed > 9f && DriftAngle > 10f && DriftAngle < 65f;
     public float SteeringInput => steeringInput;
-    public int DriftScore { get; private set; }
-    public int CurrentDriftPoints => Mathf.FloorToInt(driftPoints);
-    public float DriftMultiplier => Mathf.Min(3f, 1f + driftDuration * 0.2f);
-    public float TopSpeedKmh { get; private set; }
     public bool IsGrounded => groundedWheels > 0;
-    public bool CanDrive => controlsEnabled && Time.timeScale > 0f &&
-        (RaceManager.Instance == null || (RaceManager.Instance.raceStarted && !RaceManager.Instance.raceFinished));
+    public bool CanDrive => controlsEnabled && Time.timeScale > 0f;
     public Rigidbody CarRigidbody { get; private set; }
     public float SpeedKmh { get; private set; }
     public float ThrottleInput => driveInput;
@@ -126,7 +115,6 @@ public class CarController : MonoBehaviour
     void Awake()
     {
         CarRigidbody = GetComponent<Rigidbody>();
-        originalConstraints = CarRigidbody.constraints;
         CarRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         CarRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         CarRigidbody.angularDamping = 1f;
@@ -159,8 +147,6 @@ public class CarController : MonoBehaviour
         wheelbase = Mathf.Max(1f, Vector3.Distance(front, rear));
         visualStartRotation = carVisual != null ? carVisual.localRotation : Quaternion.identity;
         UpdateGrip();
-        if (RaceManager.Instance != null && !RaceManager.Instance.raceStarted)
-            SetGridLocked(true);
     }
 
     void Update()
@@ -183,20 +169,6 @@ public class CarController : MonoBehaviour
         UpdateGroundContact();
         float lateral = Vector3.Dot(CarRigidbody.linearVelocity, transform.right);
         DriftAngle = Mathf.Atan2(Mathf.Abs(lateral), Mathf.Max(0.1f, Mathf.Abs(forwardSpeed))) * Mathf.Rad2Deg;
-        if (CanDrive) TopSpeedKmh = Mathf.Max(TopSpeedKmh, SpeedKmh);
-
-        bool countdown = RaceManager.Instance != null && !RaceManager.Instance.raceStarted;
-        SetGridLocked(countdown);
-        if (countdown)
-        {
-            ClearInput();
-            SetMotorTorque(0f);
-            SetBrakes(brakeForce, brakeForce);
-            // Allow suspension to settle vertically, but never creep off the grid.
-            CarRigidbody.linearVelocity = new Vector3(0f, CarRigidbody.linearVelocity.y, 0f);
-            CarRigidbody.angularVelocity = Vector3.zero;
-            return;
-        }
 
         if (!CanDrive)
         {
@@ -217,7 +189,6 @@ public class CarController : MonoBehaviour
             gripRecoverySpeed * Time.fixedDeltaTime);
         UpdateGrip();
         ApplyGroundedAssists();
-        UpdateDriftScore();
         upsideDownTime = CanDrive && Vector3.Dot(transform.up, Vector3.up) < 0.2f ? upsideDownTime + Time.fixedDeltaTime : 0f;
         if (upsideDownTime > 2f || (CanDrive && !IsGrounded && CarRigidbody.linearVelocity.y < -10f &&
             transform.position.y < recoveryPosition.y - 25f)) RecoverToTrack();
@@ -265,58 +236,18 @@ public class CarController : MonoBehaviour
     public bool RecoverToTrack()
     {
         if (!CanDrive || Time.time < nextRecoveryTime) return false;
-        if (lapTracker == null) lapTracker = GetComponent<PlayerLapTracker>();
         Vector3 position = recoveryPosition;
         Quaternion rotation = recoveryRotation;
-        if (lapTracker != null) lapTracker.GetRecoveryPose(out position, out rotation);
         if (!ArcadeVehicleUtility.IsRecoverySpaceClear(position, rotation, transform)) return false;
         ArcadeVehicleUtility.Recover(CarRigidbody, position, rotation);
         currentSteerAngle = driveInput = driftBlend = previousForwardSpeed = upsideDownTime = 0f;
         SpeedKmh = DriftAngle = 0f;
-        CancelDrift();
         nextRecoveryTime = Time.time + recoveryCooldown;
-        if (RaceManager.Instance != null) RaceManager.Instance.ShowRaceMessage("BACK ON TRACK");
         return true;
-    }
-
-    void UpdateDriftScore()
-    {
-        if (!CanDrive) return;
-        if (IsDrifting && groundedWheels >= 2 && driveInput > 0.1f)
-        {
-            driftDuration += Time.fixedDeltaTime;
-            driftPoints += SpeedKmh * Mathf.Clamp01(DriftAngle / 35f) * DriftMultiplier * Time.fixedDeltaTime;
-            driftGraceTime = 0.8f;
-        }
-        else if (driftPoints > 0f)
-        {
-            driftGraceTime -= Time.fixedDeltaTime;
-            if (DriftAngle > 70f || forwardSpeed < 0f) CancelDrift();
-            else if (driftGraceTime <= 0f)
-            {
-                if (driftDuration > 0.4f) DriftScore += CurrentDriftPoints;
-                CancelDrift();
-            }
-        }
-    }
-
-    void CancelDrift()
-    {
-        driftPoints = driftDuration = driftGraceTime = 0f;
-    }
-
-    void OnCollisionEnter(Collision collision)
-    {
-        if (collision.relativeVelocity.magnitude > 5f) CancelDrift();
     }
 
     public void SetControlsEnabled(bool value)
     {
-        if (controlsEnabled && !value && driftDuration > 0.4f)
-        {
-            DriftScore += CurrentDriftPoints;
-            CancelDrift();
-        }
         controlsEnabled = value;
         if (!value)
         {
@@ -324,16 +255,6 @@ public class CarController : MonoBehaviour
             SetMotorTorque(0f);
             SetBrakes(brakeForce, brakeForce);
         }
-    }
-
-    void SetGridLocked(bool value)
-    {
-        if (gridLocked == value) return;
-        gridLocked = value;
-        CarRigidbody.constraints = value
-            ? originalConstraints | RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation
-            : originalConstraints;
-        if (value) SetMotorTorque(0f);
     }
 
     void UpdatePowerAndBrakes()
@@ -521,7 +442,7 @@ public class CarController : MonoBehaviour
     void UpdateBrakeLights()
     {
         if (brakeLights == null) return;
-        float target = BrakeInput > 0.05f || IsHandbraking || gridLocked ? brakeLightIntensity : 0f;
+        float target = BrakeInput > 0.05f || IsHandbraking ? brakeLightIntensity : 0f;
         foreach (Light light in brakeLights)
         {
             if (light != null) light.intensity = Mathf.Lerp(light.intensity, target, 1f - Mathf.Exp(-12f * Time.deltaTime));
@@ -533,6 +454,5 @@ public class CarController : MonoBehaviour
         ClearInput();
         SetMotorTorque(0f);
         SetBrakes(brakeForce, brakeForce);
-        if (CarRigidbody != null && gridLocked) SetGridLocked(false);
     }
 }

@@ -475,31 +475,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 231684753}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4166028591060624335}
-        m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
-        m_MethodName: BackToMainMenu
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &231684753
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -649,7 +625,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 179}
+  m_AnchoredPosition: {x: 300, y: 179}
   m_SizeDelta: {x: 400, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &379662510
@@ -695,31 +671,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 379662511}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4166028591060624335}
-        m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
-        m_MethodName: LoadTrack2
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &379662511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -823,7 +775,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!82 &522703827
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1337,18 +1289,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
       - m_Target: {fileID: 4166028591060624335}
         m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
         m_MethodName: Exit
@@ -1417,7 +1357,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &686475564
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1481,19 +1421,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 686475566}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &686475566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1541,7 +1469,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 718368008}
-  - component: {fileID: 718368007}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1549,18 +1476,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &718368007
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 718368006}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 12b854b4b1f1d8c42a887fa3f1c347cf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FPSLimiter
 --- !u!4 &718368008
 Transform:
   m_ObjectHideFlags: 0
@@ -1585,8 +1500,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 869401055}
-  - component: {fileID: 869401053}
-  - component: {fileID: 869401054}
   m_Layer: 0
   m_Name: Environment Manager
   m_TagString: Untagged
@@ -1594,39 +1507,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &869401053
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 869401052}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70813d4efb59da848b69506a7414181b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RainToggle
-  rainParticleSystem: {fileID: 1973468786}
-  rainAudioSource: {fileID: 522703827}
-  maxVolume: 0.2
-  fadeSpeed: 2
---- !u!114 &869401054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 869401052}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95501d6762783a04985bf1299344b217, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SkyboxToggle
-  daySkybox: {fileID: 2100000, guid: 6d3ae9b58fe5e2b4cbc58e3dd31b2332, type: 2}
-  nightSkybox: {fileID: 2100000, guid: ab675e6698bde46fd87143fb0d7580cb, type: 2}
-  dayFogColor: {r: 0, g: 0.5686275, b: 1, a: 1}
-  nightFogColor: {r: 0, g: 0.30588236, b: 0.68235296, a: 1}
-  sunLight: {fileID: 0}
 --- !u!4 &869401055
 Transform:
   m_ObjectHideFlags: 0
@@ -1652,7 +1532,6 @@ GameObject:
   m_Component:
   - component: {fileID: 884213010}
   - component: {fileID: 884213009}
-  - component: {fileID: 884213008}
   m_Layer: 0
   m_Name: UI Audio Controller
   m_TagString: Untagged
@@ -1660,20 +1539,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &884213008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 884213007}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 27c991bd2bc859f4d9172b79bcfadf39, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIManagerAudio
-  audioSource: {fileID: 884213009}
-  clickSound: {fileID: 8300000, guid: 73af60e2058d88e4289074ee81006c06, type: 3}
 --- !u!82 &884213009
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1804,7 +1669,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &887354200
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1872,18 +1737,6 @@ MonoBehaviour:
       - m_Target: {fileID: 4166028591060624335}
         m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
         m_MethodName: PracticeButton
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2086,7 +1939,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &974795410
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2150,31 +2003,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 974795412}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 869401053}
-        m_TargetAssemblyTypeName: RainToggle, Assembly-CSharp
-        m_MethodName: ToggleRain
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &974795412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2410,7 +2239,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1253948567
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2428,7 +2257,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -635, y: 179}
+  m_AnchoredPosition: {x: -300, y: 179}
   m_SizeDelta: {x: 400, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1253948568
@@ -2474,31 +2303,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1253948569}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4166028591060624335}
-        m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
-        m_MethodName: LoadTrack1
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1253948569
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2549,7 +2354,6 @@ GameObject:
   - component: {fileID: 1283628064}
   - component: {fileID: 1283628063}
   - component: {fileID: 1283628066}
-  - component: {fileID: 1283628067}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2675,26 +2479,6 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!114 &1283628067
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1283628062}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8c0610aae32bf4e9027e5ca1ba2a62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MenuCameraFloat
-  walkSideRange: 0.4
-  walkForwardRange: 0.4
-  walkSpeed: 0.4
-  handFloatRange: {x: 0.06, y: 0.05, z: 0.03}
-  handFloatSpeed: 0.8
-  rotationRange: {x: 0.8, y: 1.2, z: 0.5}
-  rotationSpeed: 0.6
-  cameraSmoothness: 4
 --- !u!1 &1295297437
 GameObject:
   m_ObjectHideFlags: 0
@@ -2712,7 +2496,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1295297438
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2986,7 +2770,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1317390142
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3003,7 +2787,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -635, y: -85}
+  m_AnchoredPosition: {x: -300, y: -85}
   m_SizeDelta: {x: 420, y: 350}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1317390143
@@ -3390,31 +3174,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1412585304}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4166028591060624335}
-        m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
-        m_MethodName: LoadTrack3
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1412585304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3487,7 +3247,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -85}
+  m_AnchoredPosition: {x: 300, y: -85}
   m_SizeDelta: {x: 420, y: 350}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1417544808
@@ -3718,7 +3478,6 @@ GameObject:
   - component: {fileID: 1836256267}
   - component: {fileID: 1836256270}
   - component: {fileID: 1836256269}
-  - component: {fileID: 1836256268}
   m_Layer: 0
   m_Name: Platform Outline
   m_TagString: Untagged
@@ -3741,18 +3500,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2193172590832703765}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
---- !u!114 &1836256268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1836256266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 830b86ad84cc24642a05c21c2d35e3f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
 --- !u!23 &1836256269
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3828,7 +3575,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1845477917
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3892,31 +3639,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1845477919}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 869401054}
-        m_TargetAssemblyTypeName: SkyboxToggle, Assembly-CSharp
-        m_MethodName: ToggleDayNight
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1845477919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3972,7 +3695,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1973468784
 Transform:
   m_ObjectHideFlags: 0
@@ -8876,19 +8599,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4166028591060624335}
         m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
-        m_MethodName: PlayButton
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
+        m_MethodName: PracticeButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -9737,19 +9448,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6145536305659824763}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 3718711746064773339}
-        m_TargetAssemblyTypeName: MusicToggle, Assembly-CSharp
-        m_MethodName: ToggleMusic
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!33 &1177934184325663069
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -10185,18 +9884,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!1 &2100889312418377865
 GameObject:
   m_ObjectHideFlags: 0
@@ -10490,7 +10177,6 @@ GameObject:
   - component: {fileID: 8619700619377714587}
   - component: {fileID: 2632561449250224569}
   - component: {fileID: 6145536305659824763}
-  - component: {fileID: 3718711746064773339}
   - component: {fileID: 1024964394556871936}
   m_Layer: 5
   m_Name: MusicButton
@@ -10498,7 +10184,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!222 &2632561449250224569
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10836,21 +10522,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &3718711746064773339
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2604474741279475303}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0919ec96de04cf54d8d0de1cb91aa6bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MusicToggle
-  musicSource: {fileID: 773015103426251310}
-  soundOnSprite: {fileID: 21300000, guid: 8cbf93cfbd6ea2e49909acb25c0915c8, type: 3}
-  soundOffSprite: {fileID: 21300000, guid: 7ec48b91fb57153419711166863ec796, type: 3}
 --- !u!1 &3748767338110752451
 GameObject:
   m_ObjectHideFlags: 0
@@ -11137,9 +10808,7 @@ MonoBehaviour:
   - carName: BMW M3
   carNameText: {fileID: 551086157}
   mainMenuPanel: {fileID: 1471516155}
-  trackSelectionPanel: {fileID: 1208938502}
   mainMenuDefaultButton: {fileID: 1983469891}
-  trackSelectionDefaultButton: {fileID: 379662510}
 --- !u!4 &4191772554819053907
 Transform:
   m_ObjectHideFlags: 0
@@ -11950,7 +11619,6 @@ GameObject:
   - component: {fileID: 4774338851546616519}
   - component: {fileID: 8007246984324845607}
   - component: {fileID: 8852756087704590645}
-  - component: {fileID: 7018988594638564819}
   m_Layer: 0
   m_Name: Platform
   m_TagString: Untagged
@@ -12471,18 +12139,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7689161739628398897}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7018988594638564819
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6125954171627644518}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 830b86ad84cc24642a05c21c2d35e3f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
 --- !u!23 &7108275435823887602
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12602,18 +12258,6 @@ MonoBehaviour:
       - m_Target: {fileID: 4166028591060624335}
         m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
         m_MethodName: PreviousCar
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 884213008}
-        m_TargetAssemblyTypeName: UIManagerAudio, Assembly-CSharp
-        m_MethodName: PlayClickSound
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

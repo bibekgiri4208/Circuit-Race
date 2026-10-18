@@ -640,7 +640,6 @@ GameObject:
   m_Component:
   - component: {fileID: 181840064}
   - component: {fileID: 181840063}
-  - component: {fileID: 181840062}
   - component: {fileID: 181840065}
   m_Layer: 0
   m_Name: Point Light - Red
@@ -649,23 +648,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &181840062
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 181840061}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 2
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 1.25
-  RotationRange: 20
 --- !u!108 &181840063
 Light:
   m_ObjectHideFlags: 0
@@ -888,8 +870,6 @@ GameObject:
   - component: {fileID: 280649738}
   - component: {fileID: 280649737}
   - component: {fileID: 280649734}
-  - component: {fileID: 280649740}
-  - component: {fileID: 280649739}
   - component: {fileID: 280649741}
   m_Layer: 0
   m_Name: Main Camera
@@ -972,46 +952,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &280649739
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 280649733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d687537154440a3913a9a3c7977978c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  CameraTarget: {fileID: 914799696}
-  FollowDistance: 45
-  MaxFollowDistance: 500
-  MinFollowDistance: 2
-  ElevationAngle: 10
-  MaxElevationAngle: 85
-  MinElevationAngle: 0
-  OrbitalAngle: 0
-  CameraMode: 0
-  MovementSmoothing: 1
-  RotationSmoothing: 0
-  MovementSmoothingValue: 25
-  RotationSmoothingValue: 5
-  MoveSensitivity: 2
---- !u!114 &280649740
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 280649733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 686ec78b56aa445795335fbadafcfaa4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  UpdateInterval: 1
-  AnchorPosition: 2
 --- !u!114 &280649741
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1239,7 +1179,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1041320350}
   - component: {fileID: 1041320349}
-  - component: {fileID: 1041320348}
   - component: {fileID: 1041320351}
   m_Layer: 0
   m_Name: Spotlight - Blue
@@ -1248,23 +1187,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1041320348
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1041320347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 1
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 1.5
-  RotationRange: 25
 --- !u!108 &1041320349
 Light:
   m_ObjectHideFlags: 0
@@ -1378,7 +1300,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1079961351}
   - component: {fileID: 1079961350}
-  - component: {fileID: 1079961349}
   - component: {fileID: 1079961352}
   m_Layer: 0
   m_Name: Point Light - Blue
@@ -1387,23 +1308,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1079961349
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1079961348}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 2
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 1
-  RotationRange: 20
 --- !u!108 &1079961350
 Light:
   m_ObjectHideFlags: 0
@@ -1854,7 +1758,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1142730611}
   - component: {fileID: 1142730610}
-  - component: {fileID: 1142730612}
   - component: {fileID: 1142730613}
   m_Layer: 0
   m_Name: Spotlight - Green
@@ -1943,23 +1846,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1888380059}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1142730612
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1142730609}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 1
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 2
-  RotationRange: 25
 --- !u!114 &1142730613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1993,7 +1879,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1185126718}
   - component: {fileID: 1185126717}
-  - component: {fileID: 1185126716}
   - component: {fileID: 1185126719}
   m_Layer: 0
   m_Name: Spotlight - White
@@ -2002,23 +1887,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!114 &1185126716
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1185126715}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 1
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 0
-  RotationRange: 30
 --- !u!108 &1185126717
 Light:
   m_ObjectHideFlags: 0
@@ -2274,7 +2142,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1328606987}
   - component: {fileID: 1328606986}
-  - component: {fileID: 1328606985}
   - component: {fileID: 1328606988}
   m_Layer: 0
   m_Name: Spotlight - Red
@@ -2283,23 +2150,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1328606985
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1328606984}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 1
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 2.5
-  RotationRange: 25
 --- !u!108 &1328606986
 Light:
   m_ObjectHideFlags: 0
@@ -2663,7 +2513,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1625386229}
   - component: {fileID: 1625386228}
-  - component: {fileID: 1625386227}
   - component: {fileID: 1625386230}
   m_Layer: 0
   m_Name: Point Light - Green
@@ -2672,23 +2521,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1625386227
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1625386226}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 2
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 1.5
-  RotationRange: 30
 --- !u!108 &1625386228
 Light:
   m_ObjectHideFlags: 0
@@ -2802,7 +2634,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1743864372}
   - component: {fileID: 1743864371}
-  - component: {fileID: 1743864373}
   - component: {fileID: 1743864374}
   m_Layer: 0
   m_Name: Spotlight - Backlight
@@ -2891,23 +2722,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1743864373
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1743864370}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 1
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 2
-  RotationRange: 45
 --- !u!114 &1743864374
 MonoBehaviour:
   m_ObjectHideFlags: 0

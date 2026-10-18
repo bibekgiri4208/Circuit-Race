@@ -1,199 +1,115 @@
-﻿using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class CarSelection : MonoBehaviour
 {
+    public const string SelectionKey = "CarIndexValue";
+
     [System.Serializable]
     public class CarInfo
     {
         public string carName;
     }
 
-    [Header("Cars")]
+    [Header("Cars (same order as the Practice spawner)")]
     [SerializeField] private GameObject[] cars;
-
-    [Header("Car Info")]
     [SerializeField] private CarInfo[] carInfos;
-
-    [Header("3D Car Name Text")]
     [SerializeField] private TMP_Text carNameText;
 
-    [Header("UI Panels")]
-    [SerializeField] private GameObject mainMenuPanel;
-    [SerializeField] private GameObject trackSelectionPanel;
-
     [Header("UI Navigation")]
+    [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private Button mainMenuDefaultButton;
-    [SerializeField] private Button trackSelectionDefaultButton;
 
-    private MenuNavigation menuNavigation;
-
-    int currentCarIndex;
-
-    void Awake()
-    {
-        if (cars == null || cars.Length == 0)
-        {
-            Debug.LogError("No cars assigned in CarSelection!");
-            return;
-        }
-
-        currentCarIndex = PlayerPrefs.GetInt("CarIndexValue", 0);
-        currentCarIndex = Mathf.Clamp(currentCarIndex, 0, cars.Length - 1);
-    }
+    private int currentCarIndex;
+    private bool isLoading;
 
     void Start()
     {
-        ShowCar(currentCarIndex);
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (cars == null || cars.Length == 0)
+        {
+            Debug.LogError("CarSelection: No display cars are assigned.", this);
+            enabled = false;
+            return;
+        }
+
+        ShowCar(PlayerPrefs.GetInt(SelectionKey, 0));
 
         Canvas canvas = mainMenuPanel != null ? mainMenuPanel.GetComponentInParent<Canvas>() : null;
         if (canvas != null)
         {
-            menuNavigation = canvas.GetComponent<MenuNavigation>();
-            if (menuNavigation == null)
-                menuNavigation = canvas.gameObject.AddComponent<MenuNavigation>();
-            menuNavigation.Initialize(canvas.gameObject, mainMenuDefaultButton);
-            menuNavigation.Focus();
+            MenuNavigation navigation = canvas.GetComponent<MenuNavigation>();
+            if (navigation == null) navigation = canvas.gameObject.AddComponent<MenuNavigation>();
+            navigation.Initialize(mainMenuPanel, mainMenuDefaultButton);
+            navigation.Focus();
         }
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
     }
 
     void Update()
     {
+        if (isLoading) return;
         Gamepad gamepad = Gamepad.current;
-        if (gamepad != null && mainMenuPanel != null && mainMenuPanel.activeInHierarchy)
-        {
-            if (gamepad.leftShoulder.wasPressedThisFrame)
-                PreviousCar();
-            else if (gamepad.rightShoulder.wasPressedThisFrame)
-                NextCar();
-        }
-
-        bool backPressed = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
-            (gamepad != null && gamepad.buttonEast.wasPressedThisFrame);
-        if (backPressed && trackSelectionPanel != null && trackSelectionPanel.activeInHierarchy)
-            BackToMainMenu();
+        if (gamepad == null) return;
+        if (gamepad.leftShoulder.wasPressedThisFrame) PreviousCar();
+        else if (gamepad.rightShoulder.wasPressedThisFrame) NextCar();
     }
 
     public void NextCar()
     {
-        if (cars == null || cars.Length == 0) return;
-
-        currentCarIndex = (currentCarIndex + 1) % cars.Length;
-        ShowCar(currentCarIndex);
+        if (!isLoading && cars != null && cars.Length > 0)
+            ShowCar((currentCarIndex + 1) % cars.Length);
     }
 
     public void PreviousCar()
     {
-        if (cars == null || cars.Length == 0) return;
-
-        currentCarIndex--;
-
-        if (currentCarIndex < 0)
-            currentCarIndex = cars.Length - 1;
-
-        ShowCar(currentCarIndex);
+        if (!isLoading && cars != null && cars.Length > 0)
+            ShowCar((currentCarIndex + cars.Length - 1) % cars.Length);
     }
 
     void ShowCar(int index)
     {
-        if (cars == null || cars.Length == 0) return;
-
-        index = Mathf.Clamp(index, 0, cars.Length - 1);
-        currentCarIndex = index;
-
+        currentCarIndex = Mathf.Clamp(index, 0, cars.Length - 1);
         for (int i = 0; i < cars.Length; i++)
         {
-            if (cars[i] != null)
-                cars[i].SetActive(i == index);
-        }
-
-        UpdateCarName(index);
-    }
-
-    void UpdateCarName(int index)
-    {
-        if (carInfos == null || carInfos.Length == 0)
-        {
-            Debug.LogWarning("No car info assigned!");
-            return;
-        }
-
-        if (index >= carInfos.Length)
-        {
-            Debug.LogWarning("Car name missing for car index: " + index);
-            return;
+            if (cars[i] != null) cars[i].SetActive(i == currentCarIndex);
         }
 
         if (carNameText != null)
         {
-            carNameText.text = carInfos[index].carName.ToUpper();
+            string carName = carInfos != null && currentCarIndex < carInfos.Length && carInfos[currentCarIndex] != null
+                ? carInfos[currentCarIndex].carName : cars[currentCarIndex] != null ? cars[currentCarIndex].name : string.Empty;
+            carNameText.text = (carName ?? string.Empty).ToUpperInvariant();
         }
-    }
-
-    public void PlayButton()
-    {
-        if (cars == null || cars.Length == 0) return;
-
-        // Save the car choice right away when entering the track menu
-        currentCarIndex = Mathf.Clamp(currentCarIndex, 0, cars.Length - 1);
-        PlayerPrefs.SetInt("CarIndexValue", currentCarIndex);
-        PlayerPrefs.Save();
-
-        // Switch panels: Hide main menu, show track choices
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
-        if (trackSelectionPanel != null) trackSelectionPanel.SetActive(true);
-        if (menuNavigation != null) menuNavigation.Focus(trackSelectionDefaultButton);
-    }
-
-    // Call this from the "Back" button in the track panel
-    public void BackToMainMenu()
-    {
-        // Switch panels back
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
-        if (trackSelectionPanel != null) trackSelectionPanel.SetActive(false);
-        if (menuNavigation != null) menuNavigation.Focus(mainMenuDefaultButton);
-    }
-
-    // Track Selection Button Functions
-    public void LoadTrack1()
-    {
-        LoadingScreen.LoadScene("Level1");
-    }
-
-    public void LoadTrack2()
-    {
-        LoadingScreen.LoadScene("Level2");
-    }
-
-    public void LoadTrack3()
-    {
-        LoadingScreen.LoadScene("Level3");
     }
 
     public void PracticeButton()
     {
-        if (cars == null || cars.Length == 0) return;
+        if (isLoading || cars == null || cars.Length == 0 || cars[currentCarIndex] == null) return;
+        if (!Application.CanStreamedLevelBeLoaded("Practice"))
+        {
+            Debug.LogError("CarSelection: Add the Practice scene to Build Settings.", this);
+            return;
+        }
 
-        currentCarIndex = Mathf.Clamp(currentCarIndex, 0, cars.Length - 1);
-
-        PlayerPrefs.SetInt("CarIndexValue", currentCarIndex);
+        PlayerPrefs.SetInt(SelectionKey, currentCarIndex);
         PlayerPrefs.Save();
-
-        LoadingScreen.LoadScene("Practice");
+        isLoading = true;
+        SceneManager.LoadSceneAsync("Practice");
     }
 
     public void Exit()
     {
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-        #else
+#else
         Application.Quit();
-        #endif
+#endif
     }
 }

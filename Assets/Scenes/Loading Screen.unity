@@ -453,7 +453,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1064356785}
-  - component: {fileID: 1064356784}
   m_Layer: 0
   m_Name: LoadingScreenManager
   m_TagString: Untagged
@@ -461,23 +460,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1064356784
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1064356783}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39d524310ece78c4c900b8674b32eac7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LoadingScreen
-  loadingPanel: {fileID: 641783751}
-  loadingText: {fileID: 1532946959}
-  progressText: {fileID: 1848704017}
-  progressBar: {fileID: 1064561084}
-  minimumLoadTime: 5
 --- !u!4 &1064356785
 Transform:
   m_ObjectHideFlags: 0

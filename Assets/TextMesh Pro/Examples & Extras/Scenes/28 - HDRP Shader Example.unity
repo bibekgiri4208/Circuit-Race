@@ -240,7 +240,6 @@ GameObject:
   - component: {fileID: 267765525}
   - component: {fileID: 267765524}
   - component: {fileID: 267765523}
-  - component: {fileID: 267765527}
   m_Layer: 0
   m_Name: Unity Flat Logo
   m_TagString: Untagged
@@ -338,23 +337,6 @@ Transform:
   - {fileID: 842134343}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 30, y: 0, z: 0}
---- !u!114 &267765527
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 267765522}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 2
-  TranslationDistance: {x: 3.5, y: 0, z: 0}
-  TranslationSpeed: 0.5
-  SpinSpeed: 0
-  RotationRange: 0
 --- !u!1 &437800966
 GameObject:
   m_ObjectHideFlags: 0
@@ -366,7 +348,6 @@ GameObject:
   - component: {fileID: 437800969}
   - component: {fileID: 437800968}
   - component: {fileID: 437800967}
-  - component: {fileID: 437800970}
   m_Layer: 0
   m_Name: Point Light - Blue
   m_TagString: Untagged
@@ -596,23 +577,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 574041790}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &437800970
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 437800966}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 2
-  TranslationDistance: {x: 5, y: 0, z: 1}
-  TranslationSpeed: 0.75
-  SpinSpeed: 1
-  RotationRange: 5
 --- !u!1 &572775507
 GameObject:
   m_ObjectHideFlags: 0
@@ -624,7 +588,6 @@ GameObject:
   - component: {fileID: 572775511}
   - component: {fileID: 572775510}
   - component: {fileID: 572775509}
-  - component: {fileID: 572775508}
   m_Layer: 0
   m_Name: Point Light - Red
   m_TagString: Untagged
@@ -632,23 +595,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &572775508
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 572775507}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 2
-  TranslationDistance: {x: 5, y: 0, z: 1}
-  TranslationSpeed: 1.25
-  SpinSpeed: 0.75
-  RotationRange: 5
 --- !u!114 &572775509
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1093,7 +1039,6 @@ GameObject:
   - component: {fileID: 1020283464}
   - component: {fileID: 1020283463}
   - component: {fileID: 1020283462}
-  - component: {fileID: 1020283461}
   m_Layer: 0
   m_Name: Spot Light - Background
   m_TagString: Untagged
@@ -1101,23 +1046,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1020283461
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1020283460}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 1
-  TranslationDistance: {x: 5, y: 0, z: 0}
-  TranslationSpeed: 1
-  SpinSpeed: 3
-  RotationRange: 20
 --- !u!114 &1020283462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1351,7 +1279,6 @@ GameObject:
   - component: {fileID: 1179778785}
   - component: {fileID: 1179778784}
   - component: {fileID: 1179778783}
-  - component: {fileID: 1179778782}
   m_Layer: 0
   m_Name: Point Light - Green
   m_TagString: Untagged
@@ -1359,23 +1286,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1179778782
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1179778781}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f19c7f94c794c5097d8bd11e39c750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Motion: 2
-  TranslationDistance: {x: 5, y: 0, z: 1}
-  TranslationSpeed: 1
-  SpinSpeed: 1.25
-  RotationRange: 5
 --- !u!114 &1179778783
 MonoBehaviour:
   m_ObjectHideFlags: 0

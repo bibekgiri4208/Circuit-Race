@@ -199,7 +199,6 @@ GameObject:
   - component: {fileID: 1063675290}
   - component: {fileID: 1063675292}
   - component: {fileID: 1063675291}
-  - component: {fileID: 1063675293}
   m_Layer: 0
   m_Name: TextMeshPro Text
   m_TagString: Untagged
@@ -357,29 +356,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1063675289}
   m_CullTransparentMesh: 0
---- !u!114 &1063675293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1063675289}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21256c5b62f346f18640dad779911e20, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowCharacters: 0
-  ShowWords: 0
-  ShowLinks: 0
-  ShowLines: 0
-  ShowMeshBounds: 0
-  ShowTextBounds: 0
-  ObjectStats: 'Characters: 773   Words: 128   Spaces: 129   Sprites: 0   Links: 0
-
-    Lines: 19   Pages: 1'
-  m_TextComponent: {fileID: 1063675291}
-  m_Transform: {fileID: 1063675290}
 --- !u!1 &1728718679
 GameObject:
   m_ObjectHideFlags: 0

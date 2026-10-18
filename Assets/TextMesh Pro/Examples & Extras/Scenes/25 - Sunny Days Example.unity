@@ -205,7 +205,6 @@ GameObject:
   - component: {fileID: 1027572110}
   - component: {fileID: 1027572112}
   - component: {fileID: 1027572111}
-  - component: {fileID: 1027572113}
   m_Layer: 0
   m_Name: TextMeshPro Text
   m_TagString: Untagged
@@ -349,54 +348,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1027572109}
   m_CullTransparentMesh: 0
---- !u!114 &1027572113
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1027572109}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 790744c462254b7ba8038e6ed28b3db2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  VertexCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 10.12177
-      outSlope: 10.12177
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.5
-      value: 2
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: -10.837328
-      outSlope: -10.837328
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  AngleMultiplier: 1
-  SpeedMultiplier: 1
-  CurveScale: 2
 --- !u!1 &1098613604
 GameObject:
   m_ObjectHideFlags: 0

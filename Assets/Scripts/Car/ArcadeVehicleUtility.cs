@@ -17,20 +17,6 @@ public static class ArcadeVehicleUtility
         body.AddForce(forward * Mathf.Sign(input) * extra * contactFactor, ForceMode.Acceleration);
     }
 
-    public static int GroundContact(WheelCollider[] wheels, out Vector3 normal)
-    {
-        int count = 0;
-        normal = Vector3.zero;
-        foreach (WheelCollider wheel in wheels)
-        {
-            if (!wheel.GetGroundHit(out WheelHit hit)) continue;
-            normal += hit.normal;
-            count++;
-        }
-        normal = count > 0 ? normal.normalized : Vector3.up;
-        return count;
-    }
-
     public static void Recover(Rigidbody body, Vector3 position, Quaternion rotation)
     {
         body.linearVelocity = body.angularVelocity = Vector3.zero;
@@ -48,8 +34,7 @@ public static class ArcadeVehicleUtility
         foreach (Collider collider in nearby)
         {
             Rigidbody other = collider.attachedRigidbody;
-            if (other != null && other.transform != car &&
-                (other.GetComponent<CarController>() != null || other.GetComponent<SimpleAICarController>() != null)) return false;
+            if (other != null && other.transform != car && other.GetComponent<CarController>() != null) return false;
         }
         return true;
     }

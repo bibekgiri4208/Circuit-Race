@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 // Example skid script. Put this on a WheelCollider.
 // Copyright 2017 Nition, BSD licence (see LICENCE file). http://nition.co

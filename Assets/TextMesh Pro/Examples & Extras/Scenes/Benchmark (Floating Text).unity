@@ -200,8 +200,6 @@ GameObject:
   - component: {fileID: 280649738}
   - component: {fileID: 280649737}
   - component: {fileID: 280649734}
-  - component: {fileID: 280649740}
-  - component: {fileID: 280649739}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -273,46 +271,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &280649739
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 280649733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d687537154440a3913a9a3c7977978c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  CameraTarget: {fileID: 0}
-  FollowDistance: 200
-  MaxFollowDistance: 500
-  MinFollowDistance: 2
-  ElevationAngle: 30
-  MaxElevationAngle: 85
-  MinElevationAngle: 0
-  OrbitalAngle: 0
-  CameraMode: 0
-  MovementSmoothing: 1
-  RotationSmoothing: 0
-  MovementSmoothingValue: 25
-  RotationSmoothingValue: 5
-  MoveSensitivity: 2
---- !u!114 &280649740
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 280649733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 686ec78b56aa445795335fbadafcfaa4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  UpdateInterval: 5
-  AnchorPosition: 2
 --- !u!1 &1097136440
 GameObject:
   m_ObjectHideFlags: 0
@@ -391,7 +349,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2142710355}
-  - component: {fileID: 2142710354}
   m_Layer: 0
   m_Name: Benchmark (Shader Perf)
   m_TagString: Untagged
@@ -399,20 +356,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2142710354
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2142710353}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8538afcddc14efbb5d9e94b7ae50197, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SpawnType: 0
-  NumberOfNPC: 250
 --- !u!4 &2142710355
 Transform:
   m_ObjectHideFlags: 0

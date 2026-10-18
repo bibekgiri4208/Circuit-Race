@@ -429,7 +429,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 3562353827766476490}
         m_TargetAssemblyTypeName: CarSelection, Assembly-CSharp
-        m_MethodName: PlayButton
+        m_MethodName: PracticeButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2012,7 +2012,6 @@ GameObject:
   - component: {fileID: 9169299204478408862}
   - component: {fileID: 3181808187879605436}
   - component: {fileID: 6767192482113582974}
-  - component: {fileID: 4268064039957908958}
   - component: {fileID: 475647283962079237}
   m_Layer: 5
   m_Name: MusicButton
@@ -2020,7 +2019,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &9169299204478408862
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2078,21 +2077,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4268064039957908958
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3207762478628666210}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0919ec96de04cf54d8d0de1cb91aa6bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MusicToggle
-  musicSource: {fileID: 151710772906948395}
-  soundOnSprite: {fileID: 21300000, guid: aa1f85f1514205f4d944108d2d2311a9, type: 3}
-  soundOffSprite: {fileID: 21300000, guid: a3ccec90a0ed92848ae5bd9cafcc94d9, type: 3}
 --- !u!114 &475647283962079237
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2136,19 +2120,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6767192482113582974}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4268064039957908958}
-        m_TargetAssemblyTypeName: MusicToggle, Assembly-CSharp
-        m_MethodName: ToggleMusic
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1 &3228906986178848846
 GameObject:
   m_ObjectHideFlags: 0
@@ -4654,7 +4626,6 @@ GameObject:
   - component: {fileID: 5395711352323207106}
   - component: {fileID: 7475911290650373410}
   - component: {fileID: 8249468355187254320}
-  - component: {fileID: 7622560007061442774}
   m_Layer: 0
   m_Name: Platform
   m_TagString: Untagged
@@ -4745,18 +4716,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &7622560007061442774
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6747364056337488739}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 830b86ad84cc24642a05c21c2d35e3f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
 --- !u!1 &6775502005168855153
 GameObject:
   m_ObjectHideFlags: 0

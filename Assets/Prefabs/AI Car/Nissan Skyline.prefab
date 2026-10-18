@@ -1809,7 +1809,6 @@ GameObject:
   - component: {fileID: 2616065197519723210}
   - component: {fileID: 3266438513772247365}
   - component: {fileID: 5412401729591811985}
-  - component: {fileID: 200548414360462549}
   m_Layer: 0
   m_Name: Nissan Skyline
   m_TagString: Untagged
@@ -1888,48 +1887,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.7857208, y: 1.0007089, z: 4.5886717}
   m_Center: {x: 0.002708435, y: 0.8371684, z: 0.003546238}
---- !u!114 &200548414360462549
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9012538526387390341}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fa2d22652c864847a8ce11ce9b04672, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SimpleAICarController
-  wheelFL: {fileID: 3632406492000778054}
-  wheelFR: {fileID: 4242232827434014146}
-  wheelRL: {fileID: 181497577723649653}
-  wheelRR: {fileID: 3382951037775472652}
-  meshFL: {fileID: 2264696664694181623}
-  meshFR: {fileID: 6247088169855699414}
-  meshRL: {fileID: 7112070494746159784}
-  meshRR: {fileID: 316569965445176989}
-  waypoints:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  currentWaypointIndex: 0
-  waypointReachDistance: 8
-  maxSpeedKmh: 166
-  motorTorque: 4000
-  brakeTorque: 3500
-  maxSteerAngle: 32
-  steerSensitivity: 8
-  obstacleLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  frontSensorLength: 10
-  sideSensorLength: 4
-  sensorHeight: 0.6
-  sensorSideOffset: 0.75
-  avoidanceSteerStrength: 0.5
-  obstacleSlowSpeedKmh: 35
-  centerOfMass: {fileID: 6141107687275184299}
-  fallbackCOM: {x: 0, y: -0.6, z: 0.1}
-  downforce: 80
-  showSensorRays: 1
