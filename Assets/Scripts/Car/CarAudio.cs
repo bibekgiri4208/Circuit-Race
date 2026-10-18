@@ -37,6 +37,7 @@ public class CarAudio : MonoBehaviour
     int currentGear = 0;
     float rpmDrop = 0f;
     float lastShiftTime;
+    public int CurrentGear => currentGear + 1;
 
     void Start()
     {
@@ -45,6 +46,8 @@ public class CarAudio : MonoBehaviour
 
         if (rb == null)
             rb = GetComponent<Rigidbody>();
+        if (gearSpeeds == null || gearSpeeds.Length == 0)
+            gearSpeeds = new[] { 30f, 60f, 90f, 125f, 160f, 190f };
 
         // ENGINE
         if (engineSource != null)
@@ -91,7 +94,7 @@ public class CarAudio : MonoBehaviour
 
         float gearMinSpeed = currentGear == 0 ? 0f : gearSpeeds[currentGear - 1];
         float gearMaxSpeed = currentGear >= gearSpeeds.Length
-            ? car.maxForwardSpeed
+            ? Mathf.Max(gearMinSpeed + 15f, car.maxForwardSpeed * 3.6f)
             : gearSpeeds[currentGear];
 
         float gearProgress = Mathf.InverseLerp(
@@ -210,7 +213,7 @@ public class CarAudio : MonoBehaviour
             speedKmh > 28f &&
             driftAngle > 10f;
 
-        bool shouldSkid = realDrift || handbrakeDrift;
+        bool shouldSkid = car.IsGrounded && (realDrift || handbrakeDrift);
 
         if (shouldSkid)
         {

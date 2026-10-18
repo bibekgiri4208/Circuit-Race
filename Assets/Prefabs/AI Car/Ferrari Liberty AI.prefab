@@ -464,11 +464,11 @@ MonoBehaviour:
   - {fileID: 0}
   currentWaypointIndex: 0
   waypointReachDistance: 18
-  maxSpeedKmh: 150
+  maxSpeedKmh: 172
   motorTorque: 4000
   brakeTorque: 4500
-  maxSteerAngle: 20
-  steerSensitivity: 4
+  maxSteerAngle: 35
+  steerSensitivity: 8
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 200

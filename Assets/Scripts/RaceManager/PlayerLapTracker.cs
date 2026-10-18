@@ -19,7 +19,17 @@ public class PlayerLapTracker : MonoBehaviour
     private readonly List<float> lapTimes = new List<float>();
     private float lastLapFinishTime;
     private bool raceCompleted;
+    private int routeSegment = -1;
+    private Vector3 recoveryPosition;
+    private Quaternion recoveryRotation;
+    private float wrongWayTime;
+    private Rigidbody body;
 
+    public int GridIndex { get; internal set; }
+    public int LivePosition { get; internal set; }
+    public float LapRouteDistance { get; private set; }
+    public float RaceDistance => (currentLap - 1) * (RaceManager.Instance != null && RaceManager.Instance.Route != null ? RaceManager.Instance.Route.Length : 0f) + LapRouteDistance;
+    public bool IsWrongWay => wrongWayTime > 1.5f;
     public bool IsPlayer => GetComponent<CarController>() != null;
     public bool RaceCompleted => raceCompleted;
     public int FinishPosition { get; internal set; }
@@ -33,6 +43,47 @@ public class PlayerLapTracker : MonoBehaviour
         RefreshUI();
     }
 
+    void Awake()
+    {
+        body = GetComponent<Rigidbody>();
+        CaptureRecoveryPose();
+    }
+
+    void FixedUpdate()
+    {
+        RaceManager race = RaceManager.Instance;
+        if (race == null || race.Route == null || !race.Route.IsValid || raceCompleted) return;
+        float distance = race.Route.Project(transform.position, ref routeSegment, out _);
+        LapRouteDistance = race.GetLapRouteDistance(distance);
+        // The grid is slightly behind the finish line; don't rank it as almost a whole lap ahead.
+        if (nextCheckpointIndex == 0 && LapRouteDistance > race.Route.Length * 0.85f) LapRouteDistance = 0f;
+        race.Route.Sample(distance + 5f, out Vector3 direction);
+        bool backwards = race.raceStarted && !race.raceFinished && body != null && body.linearVelocity.magnitude > 4f &&
+            Vector3.Dot(body.linearVelocity.normalized, direction) < -0.45f;
+        wrongWayTime = backwards ? wrongWayTime + Time.fixedDeltaTime : 0f;
+    }
+
+    void CaptureRecoveryPose()
+    {
+        recoveryPosition = transform.position + Vector3.up * 0.35f;
+        recoveryRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+        RaceManager race = RaceManager.Instance;
+        if (race == null || race.Route == null || !race.Route.IsValid) return;
+        int segment = -1;
+        float distance = race.Route.Project(transform.position, ref segment, out _);
+        race.Route.Sample(distance + 3f, out Vector3 direction);
+        direction.y = 0f;
+        if (direction.sqrMagnitude > 0.01f) recoveryRotation = Quaternion.LookRotation(direction);
+    }
+
+    public void GetRecoveryPose(out Vector3 position, out Quaternion rotation)
+    {
+        position = recoveryPosition;
+        rotation = recoveryRotation;
+        routeSegment = -1;
+        wrongWayTime = 0f;
+    }
+
     public void ResetProgress(int laps, int checkpoints)
     {
         totalLaps = Mathf.Max(1, laps);
@@ -41,6 +92,9 @@ public class PlayerLapTracker : MonoBehaviour
         nextCheckpointIndex = FinishPosition = 0;
         FinishTime = BestLapTime = lastLapFinishTime = 0f;
         raceCompleted = false;
+        routeSegment = -1;
+        LapRouteDistance = wrongWayTime = 0f;
+        CaptureRecoveryPose();
         lapTimes.Clear();
         RefreshUI();
     }
@@ -50,6 +104,7 @@ public class PlayerLapTracker : MonoBehaviour
         if (!CanRecordProgress() || checkpointIndex != nextCheckpointIndex || checkpointIndex >= totalCheckpoints)
             return;
         nextCheckpointIndex++;
+        CaptureRecoveryPose();
         RefreshUI();
     }
 
@@ -74,6 +129,7 @@ public class PlayerLapTracker : MonoBehaviour
         BestLapTime = BestLapTime <= 0f ? lapTime : Mathf.Min(BestLapTime, lapTime);
         lastLapFinishTime = elapsed;
         nextCheckpointIndex = 0;
+        CaptureRecoveryPose();
 
         if (currentLap >= totalLaps)
         {

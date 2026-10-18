@@ -10546,8 +10546,6 @@ MonoBehaviour:
   handbrakeForce: 5000
   maxForwardSpeed: 50
   maxReverseSpeed: 10
-  boostForce: 9000
-  boostMaxSpeed: 65
   steerSmoothSpeed: 10
   minSteerAngleAtHighSpeed: 8
   steeringSpeedForMinAngle: 45

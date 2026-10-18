@@ -26,6 +26,7 @@ public class CarController : MonoBehaviour
     [Min(0f)] public float reverseEngageSpeed = 0.5f;
     [Min(0f)] public float brakingDeceleration = 18f;
     [Min(0f)] public float coastingDeceleration = 0.8f;
+    [Min(1f)] public float arcadeAcceleration = 10.5f;
 
     [Header("Drivetrain (normalized axle split)")]
     [Range(0f, 1f)] public float frontTorqueRatio = 0.4f;
@@ -38,28 +39,28 @@ public class CarController : MonoBehaviour
     [Min(1f)] public float maxReverseSpeed = 10f;
     [SerializeField, HideInInspector, FormerlySerializedAs("topSpeedKmh")] private float legacyTopSpeedKmh;
 
-    [Header("NOS Boost")]
-    [Min(0f)] public float boostForce = 9000f;
-    [Min(1f)] public float boostMaxSpeed = 65f;
-
     [Header("Steering")]
     [Range(1f, 50f)] public float maxSteerAngle = 35f;
     [FormerlySerializedAs("steerResponse"), Min(0f)] public float steerSmoothSpeed = 10f;
     [Range(1f, 20f)] public float minSteerAngleAtHighSpeed = 8f;
     [Min(1f)] public float steeringSpeedForMinAngle = 45f;
     [Min(0.1f)] public float steerExponent = 1f;
-    [Min(0f)] public float steeringAssist = 3f;
+    [Min(0f)] public float steeringAssist = 6f;
     [Range(10f, 120f)] public float maxYawRate = 65f;
-    [Min(0f)] public float maxYawAcceleration = 4f;
+    [Min(0f)] public float maxYawAcceleration = 7f;
+    [Min(1f)] public float corneringAcceleration = 24f;
 
     [Header("Grip and Drift")]
     [Min(0f)] public float lateralCorrectionForce = 5000f;
     [Min(0f)] public float maxGripAcceleration = 22f;
-    [Range(0f, 1f)] public float driftGripMultiplier = 0.25f;
+    [Range(0f, 1f)] public float driftGripMultiplier = 0.42f;
     [Range(0.1f, 1f)] public float driftRearFrictionMultiplier = 0.45f;
     [Min(0f)] public float gripRecoverySpeed = 4f;
     [Min(0f)] public float rearSidewaysStiffness = 1.65f;
     [Min(0f)] public float frontSidewaysStiffness = 1.7f;
+    [Range(10f, 60f)] public float driftAngleLimit = 38f;
+    [Range(1f, 2f)] public float driftSteerMultiplier = 1.35f;
+    [Min(0f)] public float recoveryCooldown = 3f;
 
     [Header("Grounded Stability")]
     [FormerlySerializedAs("downforce"), Min(0f)] public float downForce = 70f;
@@ -96,10 +97,23 @@ public class CarController : MonoBehaviour
     private int groundedWheels;
     private Vector3 groundNormal = Vector3.up;
     private Quaternion visualStartRotation;
-    private bool boostRequested;
+    private PlayerLapTracker lapTracker;
+    private Vector3 recoveryPosition;
+    private Quaternion recoveryRotation;
+    private float nextRecoveryTime;
+    private float upsideDownTime;
+    private float driftPoints;
+    private float driftDuration;
+    private float driftGraceTime;
 
-    public bool IsBoosting { get; private set; }
     public bool IsHandbraking { get; private set; }
+    public float DriftAngle { get; private set; }
+    public bool IsDrifting => IsGrounded && forwardSpeed > 9f && DriftAngle > 10f && DriftAngle < 65f;
+    public float SteeringInput => steeringInput;
+    public int DriftScore { get; private set; }
+    public int CurrentDriftPoints => Mathf.FloorToInt(driftPoints);
+    public float DriftMultiplier => Mathf.Min(3f, 1f + driftDuration * 0.2f);
+    public float TopSpeedKmh { get; private set; }
     public bool IsGrounded => groundedWheels > 0;
     public bool CanDrive => controlsEnabled && Time.timeScale > 0f &&
         (RaceManager.Instance == null || (RaceManager.Instance.raceStarted && !RaceManager.Instance.raceFinished));
@@ -119,12 +133,13 @@ public class CarController : MonoBehaviour
         CarRigidbody.maxAngularVelocity = 5f;
         CarRigidbody.centerOfMass = centerOfMassTransform != null
             ? transform.InverseTransformPoint(centerOfMassTransform.position) : centerOfMassOffset;
+        recoveryPosition = transform.position;
+        recoveryRotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
         // Older car prefabs store their top speed in km/h, not m/s.
         if (legacyTopSpeedKmh > 0f)
         {
             maxForwardSpeed = legacyTopSpeedKmh / 3.6f;
-            boostMaxSpeed = Mathf.Max(boostMaxSpeed, maxForwardSpeed * 1.25f);
         }
 
         wheels = new[] { frontLeftCollider, frontRightCollider, rearLeftCollider, rearRightCollider };
@@ -166,6 +181,9 @@ public class CarController : MonoBehaviour
         longitudinalAcceleration = (forwardSpeed - previousForwardSpeed) / Time.fixedDeltaTime;
         previousForwardSpeed = forwardSpeed;
         UpdateGroundContact();
+        float lateral = Vector3.Dot(CarRigidbody.linearVelocity, transform.right);
+        DriftAngle = Mathf.Atan2(Mathf.Abs(lateral), Mathf.Max(0.1f, Mathf.Abs(forwardSpeed))) * Mathf.Rad2Deg;
+        if (CanDrive) TopSpeedKmh = Mathf.Max(TopSpeedKmh, SpeedKmh);
 
         bool countdown = RaceManager.Instance != null && !RaceManager.Instance.raceStarted;
         SetGridLocked(countdown);
@@ -193,16 +211,22 @@ public class CarController : MonoBehaviour
             UpdatePowerAndBrakes();
         }
 
-        driftBlend = Mathf.MoveTowards(driftBlend, IsHandbraking && Mathf.Abs(forwardSpeed) > 5f ? 1f : 0f,
+        float targetDrift = IsHandbraking && forwardSpeed > 7f ? 1f :
+            driftBlend > 0.1f && IsDrifting && driveInput > 0.1f && Mathf.Abs(steeringInput) > 0.15f ? 0.65f : 0f;
+        driftBlend = Mathf.MoveTowards(driftBlend, targetDrift,
             gripRecoverySpeed * Time.fixedDeltaTime);
         UpdateGrip();
         ApplyGroundedAssists();
+        UpdateDriftScore();
+        upsideDownTime = CanDrive && Vector3.Dot(transform.up, Vector3.up) < 0.2f ? upsideDownTime + Time.fixedDeltaTime : 0f;
+        if (upsideDownTime > 2f || (CanDrive && !IsGrounded && CarRigidbody.linearVelocity.y < -10f &&
+            transform.position.y < recoveryPosition.y - 25f)) RecoverToTrack();
     }
 
     void ReadInput()
     {
         acceleratorInput = reverseInput = steeringInput = 0f;
-        IsHandbraking = boostRequested = IsBoosting = false;
+        IsHandbraking = false;
         if (!CanDrive)
         {
             ClearInput();
@@ -217,7 +241,7 @@ public class CarController : MonoBehaviour
             acceleratorInput = keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed ? 1f : 0f;
             reverseInput = keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed ? 1f : 0f;
             IsHandbraking = keyboard.spaceKey.isPressed;
-            boostRequested = keyboard.leftShiftKey.isPressed;
+            if (keyboard.rKey.wasPressedThisFrame) RecoverToTrack();
         }
 
         Gamepad gamepad = Gamepad.current;
@@ -228,18 +252,71 @@ public class CarController : MonoBehaviour
             acceleratorInput = Mathf.Max(acceleratorInput, gamepad.rightTrigger.ReadValue());
             reverseInput = Mathf.Max(reverseInput, gamepad.leftTrigger.ReadValue());
             IsHandbraking |= gamepad.buttonWest.isPressed;
-            boostRequested |= gamepad.buttonSouth.isPressed;
+            if (gamepad.buttonNorth.wasPressedThisFrame) RecoverToTrack();
         }
     }
 
     void ClearInput()
     {
         steeringInput = acceleratorInput = reverseInput = driveInput = BrakeInput = 0f;
-        IsHandbraking = boostRequested = IsBoosting = false;
+        IsHandbraking = false;
+    }
+
+    public bool RecoverToTrack()
+    {
+        if (!CanDrive || Time.time < nextRecoveryTime) return false;
+        if (lapTracker == null) lapTracker = GetComponent<PlayerLapTracker>();
+        Vector3 position = recoveryPosition;
+        Quaternion rotation = recoveryRotation;
+        if (lapTracker != null) lapTracker.GetRecoveryPose(out position, out rotation);
+        if (!ArcadeVehicleUtility.IsRecoverySpaceClear(position, rotation, transform)) return false;
+        ArcadeVehicleUtility.Recover(CarRigidbody, position, rotation);
+        currentSteerAngle = driveInput = driftBlend = previousForwardSpeed = upsideDownTime = 0f;
+        SpeedKmh = DriftAngle = 0f;
+        CancelDrift();
+        nextRecoveryTime = Time.time + recoveryCooldown;
+        if (RaceManager.Instance != null) RaceManager.Instance.ShowRaceMessage("BACK ON TRACK");
+        return true;
+    }
+
+    void UpdateDriftScore()
+    {
+        if (!CanDrive) return;
+        if (IsDrifting && groundedWheels >= 2 && driveInput > 0.1f)
+        {
+            driftDuration += Time.fixedDeltaTime;
+            driftPoints += SpeedKmh * Mathf.Clamp01(DriftAngle / 35f) * DriftMultiplier * Time.fixedDeltaTime;
+            driftGraceTime = 0.8f;
+        }
+        else if (driftPoints > 0f)
+        {
+            driftGraceTime -= Time.fixedDeltaTime;
+            if (DriftAngle > 70f || forwardSpeed < 0f) CancelDrift();
+            else if (driftGraceTime <= 0f)
+            {
+                if (driftDuration > 0.4f) DriftScore += CurrentDriftPoints;
+                CancelDrift();
+            }
+        }
+    }
+
+    void CancelDrift()
+    {
+        driftPoints = driftDuration = driftGraceTime = 0f;
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.relativeVelocity.magnitude > 5f) CancelDrift();
     }
 
     public void SetControlsEnabled(bool value)
     {
+        if (controlsEnabled && !value && driftDuration > 0.4f)
+        {
+            DriftScore += CurrentDriftPoints;
+            CancelDrift();
+        }
         controlsEnabled = value;
         if (!value)
         {
@@ -275,12 +352,9 @@ public class CarController : MonoBehaviour
         }
 
         driveInput = BrakeInput > 0f ? 0f : Mathf.MoveTowards(driveInput, requestedDrive, throttleResponse * Time.fixedDeltaTime);
-        IsBoosting = boostRequested && acceleratorInput > 0.05f && reverseInput < 0.05f &&
-            !IsHandbraking && IsGrounded && forwardSpeed >= -reverseEngageSpeed;
-
-        float speedLimit = driveInput < 0f ? maxReverseSpeed : IsBoosting ? boostMaxSpeed : maxForwardSpeed;
+        float speedLimit = driveInput < 0f ? maxReverseSpeed : maxForwardSpeed;
         float speedInDriveDirection = forwardSpeed * Mathf.Sign(driveInput);
-        float torqueFalloff = 1f - Mathf.InverseLerp(speedLimit * 0.85f, speedLimit, speedInDriveDirection);
+        float torqueFalloff = 1f - Mathf.InverseLerp(speedLimit * 0.7f, speedLimit, speedInDriveDirection);
         float torque = driveInput * motorForce * torqueFalloff;
         if (driveInput < 0f) torque *= 0.6f;
         SetMotorTorque(torque);
@@ -288,13 +362,13 @@ public class CarController : MonoBehaviour
         float braking = BrakeInput * brakeForce;
         if (Mathf.Abs(forwardSpeed) < 0.5f && Mathf.Abs(requestedDrive) < 0.05f)
             braking = Mathf.Max(braking, idleBrakeTorque);
-        SetBrakes(braking, IsHandbraking ? Mathf.Max(braking, handbrakeForce) : braking);
-
-        if (IsBoosting && forwardSpeed < boostMaxSpeed)
-        {
-            float boostFalloff = 1f - Mathf.InverseLerp(boostMaxSpeed * 0.9f, boostMaxSpeed, forwardSpeed);
-            CarRigidbody.AddForce(transform.forward * boostForce * boostFalloff, ForceMode.Force);
-        }
+        // At speed the handbrake initiates a slide, rather than stopping the rear axle dead.
+        float handbrake = handbrakeForce * Mathf.Lerp(1f, 0.18f, Mathf.InverseLerp(3f, 12f, Mathf.Abs(forwardSpeed)));
+        SetBrakes(braking, IsHandbraking ? Mathf.Max(braking, handbrake) : braking);
+        if (CanDrive)
+            ArcadeVehicleUtility.ApplyDrive(CarRigidbody, wheels, Vector3.ProjectOnPlane(transform.forward, groundNormal).normalized,
+                driveInput, driveInput < 0f ? arcadeAcceleration * 0.55f : arcadeAcceleration,
+                speedLimit, groundedWheels * 0.25f);
 
         // Ease excess powered speed away without clamping collision impulses or vertical velocity.
         if (IsGrounded && Mathf.Abs(driveInput) > 0.05f && speedInDriveDirection > speedLimit)
@@ -327,6 +401,9 @@ public class CarController : MonoBehaviour
     {
         float speedFactor = Mathf.Pow(Mathf.Clamp01(Mathf.Abs(forwardSpeed) / steeringSpeedForMinAngle), steerExponent);
         float angleLimit = Mathf.Lerp(maxSteerAngle, minSteerAngleAtHighSpeed, speedFactor);
+        // Limit cornering demand, not just wheel angle: keyboard steering stays usable at 180 km/h.
+        float safeAngle = Mathf.Atan(corneringAcceleration * wheelbase / Mathf.Max(4f, forwardSpeed * forwardSpeed)) * Mathf.Rad2Deg;
+        angleLimit = Mathf.Min(angleLimit, safeAngle * Mathf.Lerp(1f, driftSteerMultiplier, driftBlend));
         float blend = 1f - Mathf.Exp(-steerSmoothSpeed * Time.fixedDeltaTime);
         currentSteerAngle = Mathf.Lerp(currentSteerAngle, steeringInput * angleLimit, blend);
         frontLeftCollider.steerAngle = currentSteerAngle;
@@ -365,7 +442,7 @@ public class CarController : MonoBehaviour
 
     void ApplyGroundedAssists()
     {
-        // No invisible grip, boost or uprighting forces while jumping.
+        // Keep jump arcs physical; handling assistance requires road contact.
         if (groundedWheels < 2) return;
         float contactFactor = groundedWheels * 0.25f;
         Vector3 forward = Vector3.ProjectOnPlane(transform.forward, groundNormal).normalized;
@@ -377,6 +454,9 @@ public class CarController : MonoBehaviour
         float lateralSpeed = Vector3.Dot(CarRigidbody.linearVelocity, right);
         float grip = lateralCorrectionForce / 1000f * Mathf.Lerp(1f, driftGripMultiplier, driftBlend);
         float lateralAcceleration = Mathf.Clamp(-lateralSpeed * grip, -maxGripAcceleration, maxGripAcceleration);
+        // Catch excessive oversteer without removing the controlled slip of a handbrake turn.
+        if (DriftAngle > driftAngleLimit && forwardSpeed > 5f)
+            lateralAcceleration = Mathf.Clamp(-lateralSpeed * Mathf.Max(grip, 7f), -maxGripAcceleration * 1.5f, maxGripAcceleration * 1.5f);
         CarRigidbody.AddForce(right * lateralAcceleration * contactFactor, ForceMode.Acceleration);
         CarRigidbody.AddForce(-groundNormal * downForce * Mathf.Abs(forwardSpeed) * contactFactor, ForceMode.Force);
 
@@ -386,6 +466,8 @@ public class CarController : MonoBehaviour
             float yawLimit = Mathf.Lerp(maxYawRate, maxYawRate * 0.45f,
                 Mathf.Clamp01(Mathf.Abs(forwardSpeed) / maxForwardSpeed)) * Mathf.Deg2Rad;
             desiredYaw = Mathf.Clamp(desiredYaw, -yawLimit, yawLimit);
+            if (driftBlend > 0f && DriftAngle > driftAngleLimit)
+                desiredYaw *= Mathf.InverseLerp(65f, driftAngleLimit, DriftAngle);
             float yaw = Vector3.Dot(CarRigidbody.angularVelocity, groundNormal);
             float correction = Mathf.Clamp((desiredYaw - yaw) * steeringAssist, -maxYawAcceleration, maxYawAcceleration);
             CarRigidbody.AddTorque(groundNormal * correction * contactFactor, ForceMode.Acceleration);

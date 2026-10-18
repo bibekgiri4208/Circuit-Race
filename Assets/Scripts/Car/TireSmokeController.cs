@@ -44,7 +44,8 @@ public class TireSmokeController : MonoBehaviour
         if (car == null) return;
 
         // 1. Calculate physics vectors from the vehicle's Rigidbody to find lateral slide
-        Rigidbody carRb = car.GetComponent<Rigidbody>();
+        Rigidbody carRb = car.CarRigidbody;
+        if (carRb == null) return;
         Vector3 localVelocity = car.transform.InverseTransformDirection(carRb.linearVelocity);
         float sidewaysSpeed = Mathf.Abs(localVelocity.x);
 
@@ -68,6 +69,7 @@ public class TireSmokeController : MonoBehaviour
         if (rearWheelspin) rearRate = Mathf.Max(rearRate, launchSmokeRate);
         if (brakeLockup) rearRate = Mathf.Max(rearRate, brakeSkidSmokeRate);
         if (lateralSlide) rearRate = Mathf.Max(rearRate, corneringSmokeRate);
+        if (car.IsDrifting) rearRate = Mathf.Max(rearRate, driftSmokeRate * Mathf.Clamp01(car.DriftAngle / 35f));
 
         // Handle Front Wheels (Grip loss from heavy braking or severe understeer cornering)
         if (brakeLockup) frontRate = Mathf.Max(frontRate, brakeSkidSmokeRate);

@@ -105,6 +105,11 @@ public class RaceResultsUI : MonoBehaviour
         }
         CreateText(card, "LapSplits", string.Join("    |    ", laps), new Vector2(0f, -top + 166f),
             new Vector2(1000f, 42f), 18f, new Color(0.65f, 0.75f, 0.85f));
+        CarController playerCar = player != null ? player.GetComponent<CarController>() : null;
+        if (playerCar != null)
+            CreateText(card, "ArcadeStats", "TOP SPEED  " + Mathf.RoundToInt(playerCar.TopSpeedKmh) +
+                " KM/H    |    DRIFT SCORE  " + playerCar.DriftScore.ToString("N0"), new Vector2(0f, -top + 207f),
+                new Vector2(1000f, 32f), 18f, Accent);
 
         Button retry = CreateButton(card, "Retry", "RACE AGAIN", new Vector2(-235f, -top + 94f));
         Button garage = CreateButton(card, "Garage", "BACK TO GARAGE", new Vector2(235f, -top + 94f));

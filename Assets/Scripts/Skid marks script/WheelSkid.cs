@@ -125,6 +125,12 @@ public class WheelSkid : MonoBehaviour
     }
 
     // Used by CarSpawner after spawning the car
+    public void ResetTrail()
+    {
+        lastSkid = -1;
+    }
+
+    // Used by CarSpawner after spawning the car
     public void SetSkidmarksController(Skidmarks controller)
     {
         skidmarksController = controller;

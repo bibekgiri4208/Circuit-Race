@@ -40,8 +40,10 @@ public class CarSpawner : MonoBehaviour
         if (RaceManager.Instance != null)
             RaceManager.Instance.RegisterRacer(SpawnedCar);
 
+        if (cameraScript == null && Camera.main != null) cameraScript = Camera.main.GetComponent<ChaseCamera>();
         if (cameraScript != null)
         {
+            cameraScript.enabled = true;
             cameraScript.target = SpawnedCar.transform;
             cameraScript.targetRb = rb;
         }

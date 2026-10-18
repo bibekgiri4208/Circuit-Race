@@ -33,10 +33,21 @@ public class RaceManager : MonoBehaviour
     public int playerPosition;
     [Min(1)] public int totalLaps = 3;
 
+    [Header("Starting Grid")]
+    [Tooltip("Fill out the grid using the opponents already configured in the scene.")]
+    [Range(2, 12)] public int minimumRacers = 6;
+    [Min(4f)] public float gridRowSpacing = 6.5f;
+    [Min(1f)] public float gridLaneOffset = 1.8f;
+
     [Header("Checkpoint Fallback")]
     [Tooltip("Create three ordered checkpoints along the AI route when the track has no checkpoints.")]
     public bool createCheckpointsFromAIPath = true;
     public Vector3 autoCheckpointSize = new Vector3(50f, 16f, 6f);
+
+    [Header("Complete Route Override (world positions)")]
+    [Tooltip("Optional complete circuit for scenes whose original AI path is unfinished. Also aligns the finish/checkpoints with the circuit.")]
+    public Vector3[] routePointsOverride;
+    [Min(30f)] public float routeSpeedLimitKmh = 172f;
 
     [Header("Countdown Timing")]
     public float startDelay = 0.75f;
@@ -103,7 +114,13 @@ public class RaceManager : MonoBehaviour
     private RaceResultsUI resultsUI;
     private string raceMessage;
     private float messageUntil;
+    private float standingsUpdateTime;
+    private float routeStartDistance;
+    private readonly List<PlayerLapTracker> liveStandings = new List<PlayerLapTracker>();
 
+    public RaceRoute Route { get; private set; }
+    public IReadOnlyList<PlayerLapTracker> Racers => racers;
+    public string CountdownLabel { get; private set; } = "GET READY";
     public float RaceTime { get; private set; }
     public PlayerLapTracker PlayerTracker { get; private set; }
     public int CheckpointCount { get; private set; }
@@ -125,9 +142,16 @@ public class RaceManager : MonoBehaviour
         carSpawner = FindAnyObjectByType<CarSpawner>();
         mainCam = Camera.main;
         chaseCam = mainCam != null ? mainCam.GetComponent<ChaseCamera>() : null;
-        if (chaseCam != null) chaseCam.holdPosition = true;
+        if (chaseCam != null)
+        {
+            chaseCam.enabled = true;
+            chaseCam.holdPosition = true;
+        }
 
+        ApplyRouteOverride();
+        SetupRoute();
         SetupCheckpoints();
+        FillStartingGrid();
         foreach (SimpleAICarController ai in FindObjectsByType<SimpleAICarController>())
             RegisterRacer(ai.gameObject);
         RaceUIBinder.EnsureRaceHUD(transform);
@@ -145,6 +169,111 @@ public class RaceManager : MonoBehaviour
     void Update()
     {
         if (raceStarted && !raceFinished) RaceTime += Time.deltaTime;
+        if (Time.unscaledTime >= standingsUpdateTime)
+        {
+            standingsUpdateTime = Time.unscaledTime + 0.1f;
+            liveStandings.Clear();
+            liveStandings.AddRange(racers);
+            liveStandings.RemoveAll(racer => racer == null);
+            liveStandings.Sort(CompareRacers);
+            for (int i = 0; i < liveStandings.Count; i++)
+                liveStandings[i].LivePosition = i + 1;
+            if (PlayerTracker != null && !raceFinished) playerPosition = PlayerTracker.LivePosition;
+        }
+    }
+
+    void SetupRoute()
+    {
+        foreach (SimpleAICarController ai in FindObjectsByType<SimpleAICarController>())
+        {
+            RaceRoute candidate = new RaceRoute(ai.waypoints);
+            if (!candidate.IsValid) continue;
+            Route = candidate;
+            FinishLine finish = FindAnyObjectByType<FinishLine>();
+            Vector3 start = finish != null ? finish.transform.position : carSpawner != null ? carSpawner.transform.position : ai.transform.position;
+            if (finish == null)
+                foreach (RaceCheckpoint checkpoint in FindObjectsByType<RaceCheckpoint>())
+                    if (checkpoint.isFinishLine) { start = checkpoint.transform.position; break; }
+            int segment = -1;
+            routeStartDistance = Route.Project(start, ref segment, out _);
+            return;
+        }
+    }
+
+    void ApplyRouteOverride()
+    {
+        if (routePointsOverride == null || routePointsOverride.Length < 3) return;
+        Transform[] path = new Transform[routePointsOverride.Length];
+        for (int i = 0; i < path.Length; i++)
+        {
+            GameObject waypoint = new GameObject("CircuitWaypoint_" + i);
+            waypoint.transform.SetParent(transform, false);
+            waypoint.transform.position = routePointsOverride[i];
+            waypoint.AddComponent<AIWaypoint>().targetSpeedKmh = routeSpeedLimitKmh;
+            path[i] = waypoint.transform;
+        }
+        RaceRoute completeRoute = new RaceRoute(path);
+        if (!completeRoute.IsValid) return;
+        foreach (SimpleAICarController ai in FindObjectsByType<SimpleAICarController>()) ai.waypoints = path;
+        Transform finish = null;
+        FinishLine finishLine = FindAnyObjectByType<FinishLine>();
+        if (finishLine != null) finish = finishLine.transform;
+        else foreach (RaceCheckpoint checkpoint in FindObjectsByType<RaceCheckpoint>())
+            if (checkpoint.isFinishLine) { finish = checkpoint.transform; break; }
+        if (finish == null || carSpawner == null) return;
+        int segment = -1;
+        float start = completeRoute.Project(carSpawner.transform.position, ref segment, out _);
+        Vector3 position = completeRoute.Sample(start - 12f, out Vector3 direction);
+        direction.y = 0f;
+        finish.SetPositionAndRotation(position + Vector3.up * 2f, Quaternion.LookRotation(direction.normalized));
+        BoxCollider trigger = finish.GetComponent<BoxCollider>();
+        if (trigger != null) { trigger.size = autoCheckpointSize; trigger.center = Vector3.zero; }
+    }
+
+    void FillStartingGrid()
+    {
+        if (carSpawner == null || Route == null || !Route.IsValid) return;
+        SimpleAICarController[] templates = FindObjectsByType<SimpleAICarController>();
+        if (templates.Length == 0) return;
+        int needed = Mathf.Max(0, minimumRacers - templates.Length - 1);
+        int segment = -1;
+        float start = Route.Project(carSpawner.transform.position, ref segment, out _);
+        Vector3 routeStart = Route.Sample(start, out _);
+        float spawnHeight = carSpawner.transform.position.y - routeStart.y;
+        int spawned = 0;
+        for (int slot = 0; spawned < needed && slot < minimumRacers * 3; slot++)
+        {
+            int row = slot / 2 + 1;
+            float lane = slot % 2 == 0 ? -gridLaneOffset : gridLaneOffset;
+            Vector3 position = Route.Sample(start + gridRowSpacing * row, out Vector3 direction);
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.01f) continue;
+            Quaternion rotation = Quaternion.LookRotation(direction);
+            position += Vector3.Cross(Vector3.up, direction.normalized) * lane + Vector3.up * spawnHeight;
+            if (!ArcadeVehicleUtility.IsRecoverySpaceClear(position, rotation, transform)) continue;
+            SimpleAICarController template = templates[spawned % templates.Length];
+            SimpleAICarController opponent = Instantiate(template, position, rotation);
+            opponent.name = template.name.Replace("(Clone)", "").Trim() + " Rival " + (spawned + 1);
+            opponent.enabled = true;
+            spawned++;
+        }
+    }
+
+    public float GetLapRouteDistance(float distance)
+    {
+        return Route != null && Route.IsValid ? Mathf.Repeat(distance - routeStartDistance, Route.Length) : 0f;
+    }
+
+    static int CompareRacers(PlayerLapTracker a, PlayerLapTracker b)
+    {
+        if (a.RaceCompleted != b.RaceCompleted) return a.RaceCompleted ? -1 : 1;
+        if (a.RaceCompleted) return a.FinishPosition.CompareTo(b.FinishPosition);
+        int lapOrder = b.currentLap.CompareTo(a.currentLap);
+        if (lapOrder != 0) return lapOrder;
+        int checkpointOrder = b.nextCheckpointIndex.CompareTo(a.nextCheckpointIndex);
+        if (checkpointOrder != 0) return checkpointOrder;
+        int distanceOrder = b.LapRouteDistance.CompareTo(a.LapRouteDistance);
+        return distanceOrder != 0 ? distanceOrder : a.GridIndex.CompareTo(b.GridIndex);
     }
 
     void SetupCheckpoints()
@@ -153,6 +282,19 @@ public class RaceManager : MonoBehaviour
         foreach (RaceCheckpoint checkpoint in checkpoints)
         {
             if (!checkpoint.isFinishLine) CheckpointCount = Mathf.Max(CheckpointCount, checkpoint.checkpointIndex + 1);
+        }
+        if (routePointsOverride != null && routePointsOverride.Length >= 3 && Route != null && Route.IsValid && CheckpointCount > 0)
+        {
+            foreach (RaceCheckpoint checkpoint in checkpoints)
+            {
+                if (checkpoint.isFinishLine) continue;
+                float distance = routeStartDistance + Route.Length * (checkpoint.checkpointIndex + 1f) / (CheckpointCount + 1f);
+                Vector3 position = Route.Sample(distance, out Vector3 direction);
+                direction.y = 0f;
+                checkpoint.transform.SetPositionAndRotation(position + Vector3.up * 2f, Quaternion.LookRotation(direction.normalized));
+                BoxCollider trigger = checkpoint.GetComponent<BoxCollider>();
+                if (trigger != null) { trigger.size = autoCheckpointSize; trigger.center = Vector3.zero; }
+            }
         }
         if (CheckpointCount > 0 || !createCheckpointsFromAIPath) return;
 
@@ -191,6 +333,7 @@ public class RaceManager : MonoBehaviour
         if (tracker == null) tracker = car.AddComponent<PlayerLapTracker>();
         if (racers.Contains(tracker)) return;
         tracker.ResetProgress(totalLaps, CheckpointCount);
+        tracker.GridIndex = racers.Count;
         racers.Add(tracker);
         if (tracker.IsPlayer) PlayerTracker = tracker;
     }
@@ -230,13 +373,7 @@ public class RaceManager : MonoBehaviour
     public List<PlayerLapTracker> GetStandings()
     {
         List<PlayerLapTracker> standings = racers.FindAll(racer => racer != null);
-        standings.Sort((a, b) =>
-        {
-            if (a.RaceCompleted != b.RaceCompleted) return a.RaceCompleted ? -1 : 1;
-            if (a.RaceCompleted) return a.FinishPosition.CompareTo(b.FinishPosition);
-            int lapOrder = b.currentLap.CompareTo(a.currentLap);
-            return lapOrder != 0 ? lapOrder : b.nextCheckpointIndex.CompareTo(a.nextCheckpointIndex);
-        });
+        standings.Sort(CompareRacers);
         return standings;
     }
 
@@ -265,14 +402,18 @@ public class RaceManager : MonoBehaviour
         }
         yield return new WaitForSeconds(Mathf.Max(0f, startDelay));
         if (countdownParent != null) countdownParent.SetActive(true);
+        CountdownLabel = "3";
         yield return ShowCountdownNumber(textThree, colorThree, angleThree, car, originalScales[0]);
+        CountdownLabel = "2";
         yield return ShowCountdownNumber(textTwo, colorTwo, angleTwo, car, originalScales[1]);
+        CountdownLabel = "1";
         yield return ShowCountdownNumber(textOne, colorOne, angleOne, car, originalScales[2]);
 
         if (cameraTransition != null) StopCoroutine(cameraTransition);
         yield return TransitionCamera(car, angleGo);
         // The green GO and player/AI controls become active in the same frame.
         raceStarted = true;
+        CountdownLabel = "GO!";
         RaceTime = 0f;
         if (chaseCam != null) chaseCam.holdPosition = false;
         if (textGo != null)
@@ -284,6 +425,7 @@ public class RaceManager : MonoBehaviour
         yield return new WaitForSeconds(Mathf.Max(0f, goStayTime));
         yield return FadeText(textGo);
         if (countdownParent != null) countdownParent.SetActive(false);
+        CountdownLabel = null;
     }
 
     IEnumerator ShowCountdownNumber(TextMeshPro text, Color color, CountdownCameraAngle angle, Transform car, Vector3 scale)

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class ChaseCamera : MonoBehaviour
@@ -6,131 +6,106 @@ public class ChaseCamera : MonoBehaviour
     [Header("Target")]
     public Transform target;
     public Rigidbody targetRb;
-
     [Header("Camera Position")]
-    public Vector3 offset = new Vector3(0f, 1.2f, -3.5f);
-    public float followSmoothness = 12f;
-    public float lookHeight = 1f;
-
-    [Header("Cinematic Follow")]
-    public float yawFollowSpeed = 3f;
-    public float maxDriftTilt = 8f;
-    public float tiltSmoothing = 3f;
-
+    public Vector3 offset = new Vector3(0f, 2.5f, -6.4f);
+    public float followSmoothness = 14f;
+    public float lookHeight = 1.2f;
+    [Header("Arcade Follow")]
+    public float yawFollowSpeed = 7f;
+    public float maxDriftTilt = 2.5f;
+    public float tiltSmoothing = 6f;
+    public float lookAhead = 3f;
+    public float speedPullback = 1f;
+    public float baseFieldOfView = 65f;
+    public float fastFieldOfView = 82f;
+    public LayerMask obstructionLayers = ~0;
     [Header("Mouse Look")]
     public float mouseSensitivity = 0.15f;
-
     [Header("Gamepad Look")]
-    public float gamepadSensitivity = 2f;
+    public float gamepadSensitivity = 120f;
     public float gamepadDeadzone = 0.15f;
-
     [Header("Look Limits")]
     public float minPitch = -10f;
     public float maxPitch = 45f;
+    [HideInInspector] public bool holdPosition;
 
-    [HideInInspector] public bool holdPosition = false;
+    float yaw;
+    float pitch = 8f;
+    float currentTilt;
+    Transform boundTarget;
+    Camera view;
+    readonly RaycastHit[] obstructionHits = new RaycastHit[24];
 
-    private float yaw;
-    private float pitch = 15f;
-    private float currentTilt;
-    private CarController carController;
-    private bool isFreeCam;
+    void Awake() => view = GetComponent<Camera>();
 
-    private void Start()
+    public void SnapToTarget()
     {
-        if (target != null)
-        {
-            yaw = target.eulerAngles.y;
-            carController = target.GetComponent<CarController>();
-        }
+        if (target == null) return;
+        boundTarget = target;
+        if (targetRb == null) targetRb = target.GetComponent<Rigidbody>();
+        yaw = target.eulerAngles.y;
+        pitch = 8f;
+        currentTilt = 0f;
+        transform.position = target.position + Quaternion.Euler(pitch, yaw, 0f) * offset;
     }
 
-    private void LateUpdate()
+    void LateUpdate()
     {
-        if (target == null || holdPosition)
-            return;
+        if (target == null || holdPosition || Time.timeScale <= 0f) return;
+        if (boundTarget != target || Vector3.Distance(transform.position, target.position) > 30f) SnapToTarget();
+        float dt = Time.deltaTime;
+        float speed = targetRb != null ? targetRb.linearVelocity.magnitude : 0f;
+        float speedRatio = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(8f, 50f, speed));
+        bool mouseLook = Keyboard.current != null && Keyboard.current.leftCtrlKey.isPressed;
+        Vector2 stick = Gamepad.current != null ? Gamepad.current.rightStick.ReadValue() : Vector2.zero;
+        bool freeLook = mouseLook || stick.magnitude > gamepadDeadzone;
+        bool rearView = (Keyboard.current != null && Keyboard.current.cKey.isPressed) ||
+            (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed);
 
-        bool holdingCtrl = Keyboard.current != null && Keyboard.current.leftCtrlKey.isPressed;
-
-        if (holdingCtrl)
+        if (freeLook)
         {
-            isFreeCam = true;
-            HandleMouseLook();
-            FollowTargetFree();
+            Vector2 input = stick.magnitude > gamepadDeadzone ? stick * gamepadSensitivity * dt :
+                Mouse.current != null ? Mouse.current.delta.ReadValue() * mouseSensitivity : Vector2.zero;
+            yaw += input.x;
+            pitch = Mathf.Clamp(pitch - input.y, minPitch, maxPitch);
         }
         else
         {
-            if (isFreeCam)
-            {
-                yaw = target.eulerAngles.y;
-                isFreeCam = false;
-            }
-
-            FollowTargetCinematic();
+            Vector3 heading = target.forward;
+            if (targetRb != null && speed > 5f && Vector3.Dot(targetRb.linearVelocity, target.forward) > 0f)
+                heading = Vector3.Lerp(heading, targetRb.linearVelocity.normalized, 0.22f);
+            float targetYaw = Mathf.Atan2(heading.x, heading.z) * Mathf.Rad2Deg + (rearView ? 180f : 0f);
+            yaw = Mathf.LerpAngle(yaw, targetYaw, 1f - Mathf.Exp(-(rearView ? 18f : yawFollowSpeed) * dt));
+            pitch = Mathf.Lerp(pitch, 8f, 1f - Mathf.Exp(-5f * dt));
         }
-    }
 
-    private void HandleMouseLook()
-    {
-        Vector2 lookInput = Vector2.zero;
-
-        if (Gamepad.current != null)
+        Vector3 followOffset = offset;
+        followOffset.z -= speedRatio * speedPullback;
+        Vector3 desired = target.position + Quaternion.Euler(pitch, yaw, 0f) * followOffset;
+        Vector3 pivot = target.position + Vector3.up * lookHeight;
+        Vector3 boom = desired - pivot;
+        float allowed = boom.magnitude;
+        int count = Physics.SphereCastNonAlloc(pivot, 0.25f, boom.normalized, obstructionHits, allowed,
+            obstructionLayers, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < count; i++)
         {
-            Vector2 rightStick = Gamepad.current.rightStick.ReadValue();
-
-            if (rightStick.magnitude > gamepadDeadzone)
-            {
-                lookInput = rightStick * gamepadSensitivity;
-            }
+            RaycastHit hit = obstructionHits[i];
+            if (hit.collider.transform.IsChildOf(target) || hit.rigidbody == targetRb) continue;
+            allowed = Mathf.Min(allowed, Mathf.Max(0.7f, hit.distance - 0.2f));
         }
-
-        if (lookInput == Vector2.zero && Mouse.current != null)
+        desired = pivot + boom.normalized * allowed;
+        bool obstructed = allowed < boom.magnitude - 0.01f;
+        transform.position = Vector3.Lerp(transform.position, desired, 1f - Mathf.Exp(-(obstructed ? 35f : followSmoothness) * dt));
+        Vector3 lookPoint = pivot + (rearView ? -target.forward : target.forward) * lookAhead * (freeLook ? 0f : speedRatio);
+        Vector3 lookDirection = lookPoint - transform.position;
+        if (lookDirection.sqrMagnitude > 0.01f)
         {
-            lookInput = Mouse.current.delta.ReadValue() * mouseSensitivity;
+            float lateral = targetRb != null ? Vector3.Dot(targetRb.linearVelocity, target.right) : 0f;
+            float tilt = freeLook || rearView ? 0f : Mathf.Clamp(-lateral * 0.15f, -maxDriftTilt, maxDriftTilt);
+            currentTilt = Mathf.Lerp(currentTilt, tilt, 1f - Mathf.Exp(-tiltSmoothing * dt));
+            transform.rotation = Quaternion.LookRotation(lookDirection) * Quaternion.Euler(0f, 0f, currentTilt);
         }
-
-        yaw += lookInput.x;
-        pitch -= lookInput.y;
-
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
-    }
-
-    private void FollowTargetCinematic()
-    {
-        float targetYaw = target.eulerAngles.y;
-        yaw = Mathf.LerpAngle(yaw, targetYaw, yawFollowSpeed * Time.deltaTime);
-
-        Quaternion cameraRotation = Quaternion.Euler(pitch, yaw, 0f);
-
-        Vector3 desiredPosition = target.position + cameraRotation * offset;
-
-        transform.position = Vector3.Lerp(
-            transform.position,
-            desiredPosition,
-            followSmoothness * Time.deltaTime
-        );
-
-        Vector3 lookPoint = target.position + Vector3.up * lookHeight;
-
-        currentTilt = Mathf.Lerp(currentTilt, 0f, tiltSmoothing * Time.deltaTime);
-
-        Quaternion lookRot = Quaternion.LookRotation(lookPoint - transform.position);
-        transform.rotation = Quaternion.Euler(lookRot.eulerAngles.x, lookRot.eulerAngles.y, currentTilt);
-    }
-
-    private void FollowTargetFree()
-    {
-        Quaternion cameraRotation = Quaternion.Euler(pitch, yaw, 0f);
-
-        Vector3 desiredPosition = target.position + cameraRotation * offset;
-
-        transform.position = Vector3.Lerp(
-            transform.position,
-            desiredPosition,
-            followSmoothness * Time.deltaTime
-        );
-
-        Vector3 lookPoint = target.position + Vector3.up * lookHeight;
-        transform.rotation = Quaternion.LookRotation(lookPoint - transform.position);
+        if (view != null) view.fieldOfView = Mathf.Lerp(view.fieldOfView,
+            Mathf.Lerp(baseFieldOfView, fastFieldOfView, speedRatio), 1f - Mathf.Exp(-4f * dt));
     }
 }

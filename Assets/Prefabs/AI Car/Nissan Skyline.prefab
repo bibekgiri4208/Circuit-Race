@@ -1915,11 +1915,11 @@ MonoBehaviour:
   - {fileID: 0}
   currentWaypointIndex: 0
   waypointReachDistance: 8
-  maxSpeedKmh: 100
+  maxSpeedKmh: 166
   motorTorque: 4000
   brakeTorque: 3500
   maxSteerAngle: 32
-  steerSensitivity: 4
+  steerSensitivity: 8
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 0
