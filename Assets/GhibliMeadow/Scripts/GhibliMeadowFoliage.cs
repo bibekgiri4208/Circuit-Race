@@ -81,7 +81,6 @@ namespace CircuitRace.Environment
         private void Draw(Camera camera)
         {
             if (!isActiveAndEnabled || data == null || camera == null || camera.cameraType == CameraType.Preview) return;
-            if (camera.cameraType != CameraType.SceneView && camera.gameObject.scene != gameObject.scene) return;
             if ((camera.cullingMask & (1 << gameObject.layer)) == 0) return;
             if (cachedData != data || cachedTransform != transform.localToWorldMatrix) Rebuild();
             foreach (var batch in batches)
@@ -98,9 +97,10 @@ namespace CircuitRace.Environment
                 };
                 // Explicit draws have no owning Scene renderer; include the camera's
                 // temporary editor isolation mask when producing scene-only previews.
+                #if UNITY_EDITOR
                 parameters.overrideSceneCullingMask = true;
-                parameters.sceneCullingMask = camera.overrideSceneCullingMask == 0
-                    ? ulong.MaxValue : camera.overrideSceneCullingMask;
+                parameters.sceneCullingMask = UnityEditor.SceneManagement.EditorSceneManager.GetSceneCullingMask(gameObject.scene);
+                #endif
                 Graphics.RenderMeshInstanced(parameters, prototype.mesh, prototype.subMesh, batch.matrices);
             }
         }

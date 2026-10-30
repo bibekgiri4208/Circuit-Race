@@ -29,7 +29,7 @@ public static class GhibliMeadowBuilder
     public static void BuildFromMenu()
     {
         if (!EditorUtility.DisplayDialog("Build reference meadow in Testing?",
-                "Adds the meadow to Testing only. Existing objects are retained; its old camera, sun and terrain are disabled. " +
+                "Adds the meadow to Testing only. Keeps the gameplay setup, with optional reference cameras. " +
                 "Rebuilding replaces only the generated GHIBLI Reference Meadow root and its generated resources.", "Build", "Cancel")) return;
         Build();
         EditorUtility.DisplayDialog("Meadow ready", "Saved in Assets/Scenes/Testing.unity. Open Testing to view it.", "OK");
@@ -53,15 +53,13 @@ public static class GhibliMeadowBuilder
             materials.Clear();
             path.Clear();
             var oldRoot = scene.GetRootGameObjects().FirstOrDefault(g => g.name == RootName);
+            var sunSettings = LightSettings.Capture(oldRoot, "Meadow sun");
+            var fillSettings = LightSettings.Capture(oldRoot, "Cool soft fill");
             if (oldRoot != null) Object.DestroyImmediate(oldRoot);
 
-            // Keep the original scene content and prefab overrides, rather than replacing the scene.
+            // Keep gameplay objects/cameras intact. Only the legacy terrain conflicts with this ground.
             foreach (var gameObject in scene.GetRootGameObjects())
             {
-                foreach (var camera in gameObject.GetComponentsInChildren<Camera>(true)) camera.enabled = false;
-                foreach (var listener in gameObject.GetComponentsInChildren<AudioListener>(true)) listener.enabled = false;
-                foreach (var light in gameObject.GetComponentsInChildren<Light>(true))
-                    if (light.type == LightType.Directional) light.enabled = false;
                 foreach (var terrain in gameObject.GetComponentsInChildren<Terrain>(true))
                 {
                     terrain.drawHeightmap = false;
@@ -71,7 +69,6 @@ public static class GhibliMeadowBuilder
                     if (collider != null) collider.enabled = false;
                     terrain.gameObject.SetActive(false);
                 }
-                foreach (var renderer in gameObject.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
             }
 
             root = new GameObject(RootName).transform;
@@ -82,8 +79,9 @@ public static class GhibliMeadowBuilder
             MakeFencesAndShrine();
             MakeMeadow();
             MakeMountains();
-            MakeLighting();
+            MakeLighting(sunSettings, fillSettings);
             var cameras = MakeCameras();
+            GhibliMeadowPlaySetup.Ensure(scene, root);
             MakePetals();
             // Do not save unrelated dirty assets the user may have open in another scene.
             foreach (string guid in AssetDatabase.FindAssets("", new[] { Output }))
@@ -585,7 +583,54 @@ public static class GhibliMeadowBuilder
         }
     }
 
-    private static void MakeLighting()
+    private sealed class LightSettings
+    {
+        private Quaternion rotation;
+        private Color color;
+        private float intensity, colorTemperature, shadowStrength, shadowBias, shadowNormalBias;
+        private LightShadows shadows;
+        private bool enabled, active, useColorTemperature;
+
+        public static LightSettings Capture(GameObject existingRoot, string prefix)
+        {
+            if (existingRoot == null) return null;
+            var light = existingRoot.GetComponentsInChildren<Light>(true)
+                .FirstOrDefault(l => l.type == LightType.Directional &&
+                    l.name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+            if (light == null) return null;
+            return new LightSettings
+            {
+                rotation = light.transform.rotation,
+                color = light.color,
+                intensity = light.intensity,
+                colorTemperature = light.colorTemperature,
+                useColorTemperature = light.useColorTemperature,
+                shadows = light.shadows,
+                shadowStrength = light.shadowStrength,
+                shadowBias = light.shadowBias,
+                shadowNormalBias = light.shadowNormalBias,
+                enabled = light.enabled,
+                active = light.gameObject.activeSelf
+            };
+        }
+
+        public void Apply(Light light)
+        {
+            light.transform.rotation = rotation;
+            light.color = color;
+            light.intensity = intensity;
+            light.colorTemperature = colorTemperature;
+            light.useColorTemperature = useColorTemperature;
+            light.shadows = shadows;
+            light.shadowStrength = shadowStrength;
+            light.shadowBias = shadowBias;
+            light.shadowNormalBias = shadowNormalBias;
+            light.enabled = enabled;
+            light.gameObject.SetActive(active);
+        }
+    }
+
+    private static void MakeLighting(LightSettings sunSettings, LightSettings fillSettings)
     {
         var group = Group("07 • Warm sunlight, blue shadows and soft atmospheric haze");
         var sun = new GameObject("Meadow sun • upper right", typeof(Light));
@@ -599,6 +644,7 @@ public static class GhibliMeadowBuilder
         light.shadowStrength = 0.8f;
         light.shadowBias = 0.035f;
         light.shadowNormalBias = 0.3f;
+        sunSettings?.Apply(light);
         var fill = new GameObject("Cool soft fill • sky bounce", typeof(Light));
         fill.transform.SetParent(group, false);
         fill.transform.rotation = Quaternion.Euler(30, -30, 0);
@@ -607,6 +653,7 @@ public static class GhibliMeadowBuilder
         fillLight.color = new Color(0.8f, 0.86f, 1);
         fillLight.intensity = 0.65f;
         fillLight.shadows = LightShadows.None;
+        fillSettings?.Apply(fillLight);
         RenderSettings.sun = light;
         RenderSettings.ambientMode = AmbientMode.Trilight;
         RenderSettings.ambientSkyColor = new Color(0.5f, 0.63f, 0.78f);
@@ -621,7 +668,6 @@ public static class GhibliMeadowBuilder
         sky.SetColor("_Zenith", new Color(0.08f, 0.27f, 0.43f));
         sky.SetColor("_Horizon", new Color(0.39f, 0.61f, 0.70f));
         sky.SetColor("_Cloud", new Color(0.95f, 0.95f, 0.88f));
-        sky.SetVector("_SunDirection", -sun.transform.forward);
         RenderSettings.skybox = SaveAsset(sky, Output + "/Materials/Meadow Cloud Sky.mat");
         var profile = ScriptableObject.CreateInstance<VolumeProfile>();
         profile.name = "Meadow Atmosphere";
@@ -664,12 +710,11 @@ public static class GhibliMeadowBuilder
 
     private static Camera[] MakeCameras()
     {
-        var group = Group("08 • Reference viewpoints (enable only one camera)");
-        var a = MakeCamera("Main Camera • winding path (reference 1)", group,
+        var group = Group("08 • Optional reference viewpoints (disabled for gameplay)");
+        var a = MakeCamera("Reference Camera • winding path (reference 1)", group,
             new Vector3(7, Height(7, -20) + 4.7f, -20), new Vector3(4, 7.5f, 65), 57);
-        a.tag = "MainCamera";
-        a.gameObject.AddComponent<AudioListener>();
-        var b = MakeCamera("Alternate Camera • flower meadow (reference 2)", group,
+        a.enabled = false;
+        var b = MakeCamera("Reference Camera • flower meadow (reference 2)", group,
             new Vector3(13, Height(13, 13) + 1.65f, 13), new Vector3(-1, 4.5f, 65), 64);
         b.enabled = false;
         return new[] { a, b };
@@ -781,7 +826,9 @@ public static class GhibliMeadowBuilder
         return "Scene: " + ScenePath + "\nRoot: " + RootName + "\nMesh renderers: " + renderers.Length +
                "\nEnabled mesh renderers: " + renderers.Count(r => r.enabled && r.gameObject.activeInHierarchy) +
                "\nStatic vertices: " + vertices + "\nInstanced foliage placements: " + instances + "\nMissing scripts: " + missing + "\nInvalid materials: " + bad +
-               "\nActive environment cameras: " + root.GetComponentsInChildren<Camera>().Count(c => c.enabled) + "\n";
+               "\nActive scene cameras: " + scene.GetRootGameObjects()
+                   .SelectMany(g => g.GetComponentsInChildren<Camera>(true))
+                   .Count(c => c.enabled && c.gameObject.activeInHierarchy) + "\n";
     }
 
     [MenuItem("Tools/Ghibli Meadow/Refresh Preview Images")]
