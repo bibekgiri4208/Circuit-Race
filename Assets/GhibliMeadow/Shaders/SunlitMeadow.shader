@@ -9,6 +9,7 @@ Shader "CircuitRace/Ghibli Meadow/Sunlit Vegetation"
         _FlowerMask ("Pack flower cutout atlas", 2D) = "white" {}
         _UseAtlas ("Use flower atlas", Float) = 0
         _WindStrength ("Breeze", Float) = 0.045
+        _FoliageFadeDistances ("Distance fade start / end", Vector) = (68,85,0,0)
     }
     SubShader
     {
@@ -23,6 +24,7 @@ Shader "CircuitRace/Ghibli Meadow/Sunlit Vegetation"
             half4 _RootColor, _TipColor;
             float4 _Variation_ST, _FlowerColor_ST, _FlowerMask_ST;
             half _UseAtlas, _WindStrength;
+            float4 _FoliageFadeDistances;
         CBUFFER_END
         struct Attributes
         {
@@ -40,6 +42,8 @@ Shader "CircuitRace/Ghibli Meadow/Sunlit Vegetation"
             half height : TEXCOORD3;
             half fog : TEXCOORD4;
             half variation : TEXCOORD5;
+            half distanceFade : TEXCOORD6;
+            half3 bakedGI : TEXCOORD7;
             UNITY_VERTEX_INPUT_INSTANCE_ID
             UNITY_VERTEX_OUTPUT_STEREO
         };
@@ -60,11 +64,16 @@ Shader "CircuitRace/Ghibli Meadow/Sunlit Vegetation"
             output.height = height;
             output.fog = ComputeFogFactor(output.positionCS.z);
             output.variation = SAMPLE_TEXTURE2D_LOD(_Variation, sampler_Variation, world.xz*0.025, 0).r;
+            output.distanceFade = saturate((_FoliageFadeDistances.y - distance(world, _WorldSpaceCameraPos)) /
+                max(_FoliageFadeDistances.y - _FoliageFadeDistances.x, 0.001));
+            // Probe lighting varies slowly across a blade: evaluate per vertex, not per pixel.
+            output.bakedGI = SampleSH(output.normalWS);
             return output;
         }
         void Cutout(Varyings input)
         {
             if (_UseAtlas > 0.5) clip(SAMPLE_TEXTURE2D(_FlowerMask, sampler_FlowerMask, input.uv).r - 0.42);
+            clip(input.distanceFade - InterleavedGradientNoise(input.positionCS.xy, 0));
         }
         ENDHLSL
         Pass
@@ -91,7 +100,7 @@ Shader "CircuitRace/Ghibli Meadow/Sunlit Vegetation"
                 if (_UseAtlas > 0.5) albedo = SAMPLE_TEXTURE2D(_FlowerColor, sampler_FlowerColor, input.uv).rgb;
                 Light sun = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half wrapped = 0.6h + 0.4h * saturate(dot(normalize(input.normalWS), sun.direction));
-                half3 illumination = half3(0.22h,0.30h,0.32h) + sun.color * wrapped * sun.shadowAttenuation * 0.78h;
+                half3 illumination = input.bakedGI + sun.color * wrapped * sun.shadowAttenuation * 0.78h;
                 half3 colour = albedo * illumination;
                 return half4(MixFog(colour, input.fog), 1);
             }
